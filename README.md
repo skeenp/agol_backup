@@ -16,28 +16,30 @@ Requirements for the software and other tools to build, test and push
 
 A step by step series of examples that tell you how to get a development environment running. It is recomended to setup a virtual environment for running this project, especially if you plan to build it to and exe or equilivant file.
 
-Setup Virtual Environment
+####Setup Virtual Environment
 
-```Python
+``` Python
     # Setup environment
     python -m venv venv
     # Activate environment
     .\venv\Scripts\activate.bat
 ``` 
 
-[Optional] Install ArcGIS API for Python with no dependancies. This step can be handled by the requirements.txt file, however it will install the full ArcGIS API for Python which contains much more than is needed for this app. It is being managed manually here to reduce the size of files compiled for the window executable.
-'''Cmd
+####[Optional] Install ArcGIS API for Python with no dependancies.
+This step can be handled by the requirements.txt file, however it will install the full ArcGIS API for Python which contains much more than is needed for this app. It is being managed manually here to reduce the size of files compiled for the window executable.
+
+``` Cmd
     pip install arcgis --no-deps
-'''
+```
 
-Install requirements
+#### Install requirements
 
-'''Cmd
+```Cmd
   # Upgrade
   python -m pip install --upgrade pip 
   #Install requirements
   pip install -r requirements.txt
-'''
+```
 
 ## Use
 
@@ -92,9 +94,9 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c {groups,users,me,all} [{groups,users,me,all} ...], --components {groups,users,me,all} [{groups,users,me,all} ...]
+  -c, --components {groups,users,me,all} [{groups,users,me,all} ...]
                         Types to export
-  -o {item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} [{item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} ...], --options {item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} [{item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} ...]
+  -o,--options  {item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} [{item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} ...],
                         Types to export
   -v                    Verbose, also logs debug messages
   -q                    Do not log script progress to file
@@ -108,9 +110,9 @@ The execuatable backup_mgr.exe mirrors the definition of backup_mgr.py above.
 ## Building Standalong App
 
 To build a standalone version of the app, compile with pyinstaller
-'''Python
+``` Python
   pyinstaller --noconfirm --onefile --console --icon "./img/backup_gui.ico" --add-data "./certifi;certifi"  "./backup_mgr.py"
-'''
+```
 The executable will be added to a folder named 'dist' and will work on the system upon which is was built.
 
 ## TODO
