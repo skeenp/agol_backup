@@ -1,0 +1,7 @@
+__pycache__
+logs/*
+config/*
+venv
+build
+dist
+scripts
