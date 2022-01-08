@@ -13,6 +13,8 @@ import agol
 import backup_admin
 import backup_item
 
+# TODO: Multithreading on item download
+
 """Script to leverage the functionality of backup_admin and backup_item to manage a series of backups for an AGOL account"""
 
 # Run cert override
@@ -66,55 +68,59 @@ else:
 ago = agol.Agol(cfg["portal"], cfg["uname"], cfg["pword"], logger)
 # Check for error
 if ago:
+    # Check if backing up admin or normal items
+    if "admin" in cfg:
+        # Get options
+        if 'options' in cfg['admin']:
+            options = cfg['admin']["options"]
+        else:
+            options = 'all'
+        # Get options
+        if 'components' in cfg['admin']:
+            components = cfg['admin']["components"]
+        else:
+            components = 'all'
+        # Backup admin item
+        backup_admin.run(ago.gis, git_dir, components, options, logger)
+        # Update last backup time
+        cfg['admin']["last"] = datetime.now().isoformat()
     # Update status
     log.post(logger, "Processing Items")
     # Process backup items
-    for item in cfg["items"]:
+    for k, item in cfg["items"]:
         # Get item id
-        itemid = item["itemid"]
+        itemid = k
         log.post(logger, f" - {itemid}")
         # Check if backup is not yet due
-        if "last" in item:
+        if item["hours_diff"] > 0.0 and "last" in item:
             last_run = datetime.fromisoformat(item['last'])
             item_duedate = last_run + timedelta(hours=item["hours_diff"])
             item_due = item_duedate < datetime.now()
+        elif item["hours_diff"] == 0.0:
+            item_due = False
         else:
             item_due = True
         # Continue to next item if not due
         if not item_due:
             log.post(logger, "  > Skipped, not yet due")
             continue
-        # Check if backing up admin or normal items
-        if itemid == "admin":
-            # Get options
-            if 'options' in item:
-                options = item["options"]
-            else:
-                options = 'all'
-            # Get options
-            if 'components' in item:
-                components = item["components"]
-            else:
-                components = 'all'
-            # Backup admin item
-            backup_admin.run(ago.gis, git_dir, components, options, logger)
-            # Update last backup time
-            item["last"] = datetime.now().isoformat()
+        # Get format
+        if "format" in item:
+            fmt = item["format"]
         else:
-            # Get format
-            if "format" in item:
-                fmt = item["format"]
-            else:
-                fmt = None
-            # Get options
-            if 'options' in item:
-                options = item["options"]
-            else:
-                options = 'all'
-            # Run backup for item
-            backup_item.run(ago.gis, item["itemid"], git_dir, options, fmt, logger)
-            # Update last backup time
-            item["last"] = datetime.now().isoformat()
+            fmt = None
+        # Get options
+        if 'options' in item:
+            options = item["options"]
+        else:
+            options = 'all'
+        # Run backup for item
+        backup_item.run(ago.gis, itemid, git_dir, options, fmt, logger)
+        # Update last backup time
+        item["last"] = datetime.now().isoformat()
+        # Reset hours_diff if once requested
+        if item["hours_diff"] == -1.0:
+            item["hours_diff"] == 0.0
     # Add all files and committ
     repo.git.add(all=True)
     repo.index.commit(f"Data commit @ {datetime.now()}")

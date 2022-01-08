@@ -51,3 +51,28 @@ class Agol:
     def error(self):
         # Return errors
         return self._error
+
+    @property
+    def myitems(self):
+        # Setup items object with items not in a folder
+        myitems = []
+        # Return my items not in a folder
+        me = self._gis.users.me
+        folders = me.folders
+        # Setup request objects
+        requests = []
+        requests.append({'id': None, 'title': ''})
+        # Process folders
+        for f in folders:
+            # Setup folder args
+            requests.append(f)
+        # Request folder items
+        for r in requests:
+            # Collect items
+            items = self._gis.users.me.items(folder=r, max_items=9999)
+            for itm in items:
+                itm['folder'] = r['title']
+            # Build result list
+            myitems += items
+        # Return result
+        return myitems

@@ -1,4 +1,4 @@
-# ArcGIS Online Backup Utility
+# ArcGIS Online Backup Utility V01
 
 This project provides scripts and a windows exe which allows you to easily manage and schedule backups to your content on ArcGIS Online. 
 
@@ -16,29 +16,29 @@ Requirements for the software and other tools to build, test and push
 
 A step by step series of examples that tell you how to get a development environment running. It is recomended to setup a virtual environment for running this project, especially if you plan to build it to and exe or equilivant file.
 
-####Setup Virtual Environment
+#### Setup Virtual Environment
 
 ``` Python
-    # Setup environment
-    python -m venv venv
-    # Activate environment
-    .\venv\Scripts\activate.bat
+# Setup environment
+python -m venv venv
+# Activate environment
+venv\Scripts\activate.bat
 ``` 
 
-####[Optional] Install ArcGIS API for Python with no dependancies.
+#### [Optional] Install ArcGIS API for Python with no dependancies.
 This step can be handled by the requirements.txt file, however it will install the full ArcGIS API for Python which contains much more than is needed for this app. It is being managed manually here to reduce the size of files compiled for the window executable.
 
-``` Cmd
-    pip install arcgis --no-deps
+```
+pip install arcgis --no-deps
 ```
 
 #### Install requirements
 
 ```Cmd
-  # Upgrade
-  python -m pip install --upgrade pip 
-  #Install requirements
-  pip install -r requirements.txt
+# Upgrade
+python -m pip install --upgrade pip 
+#Install requirements
+pip install -r requirements.txt
 ```
 
 ## Use
@@ -104,26 +104,34 @@ optional arguments:
 
 ### Executable
 
-The execuatable backup_mgr.exe mirrors the definition of backup_mgr.py above.
+The execuatables mirror the definition of scripts above.
 
 
 ## Building Standalong App
 
 To build a standalone version of the app, compile with pyinstaller
-``` Python
-  pyinstaller --noconfirm --onefile --console --icon "./img/backup_gui.ico" --add-data "./certifi;certifi"  "./backup_mgr.py"
+``` CMD
+# Backup Manager
+pyinstaller --noconfirm --onefile --console --icon "img/backup_gui.ico" --add-data "certifi;certifi"  "backup_mgr.py"
+
+#Backup Item (Optional)
+pyinstaller --noconfirm --onefile --console --icon "img/backup_gui.ico" --add-data "certifi;certifi"  "backup_item.py"
+
+#Backup Item (Optional)
+pyinstaller --noconfirm --onefile --console --icon "img/backup_gui.ico" --add-data "certifi;certifi"  "backup_admin.py"
 ```
 The executable will be added to a folder named 'dist' and will work on the system upon which is was built.
 
 ## TODO
 
  - Make backup_mgr multithreaded 
- - Add config file gui
+ - Make backup_mgr_gui multithreaded 
+ - Add exe for backup_item, backup_admin
 
 ## Authors
 
-  - **Paul Skeen** - *Provided main code base*
-  - **Billie Thompson** - *Provided README Template*
+ - **Paul Skeen** - *Provided main code base*
+ - **Billie Thompson** - *Provided README Template*
 
 ## Acknoledgements
 

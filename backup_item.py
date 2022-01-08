@@ -21,7 +21,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, logger: 
         fmt (str): Format for export of service (only works for the following types "Feature Service", "Vector Tile Service", "Scene Service")
         logger (logging): logging object to pass to tool for logging purposes
     """
-    # Setup groups folder
+    # Setup item folder
     directory = os.path.join(directory, "items")
     if not os.path.exists(directory):
         os.makedirs(directory)
