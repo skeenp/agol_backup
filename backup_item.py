@@ -1,5 +1,6 @@
 # /usr/bin/python3
 
+from enum import Enum
 import os
 from datetime import datetime
 import logging
@@ -8,16 +9,24 @@ import log
 import util
 import agol
 import pathlib
+import json
+import time
 
 
-def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, logger: logging):
+class Response(Enum):
+    Success = 1
+    ItemNotFound = 2
+    ItemNotModified = 3
+
+
+def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unmodified: bool, logger: logging):
     """Module to grab an item and its associated resources from ArcGIS Online and to save them to disk
 
     Args:
         gis (GIS): [description]
         itemid (str): ID of Arcgis Online item to backup
         directory (str): Output directory for data extracted in this tool
-        options (list): Options for backup, currently supported options are item,data,metadata, thumbnail, url, sharing, appinfo, related, service or all
+        options (list): Options for backup, currently supported options are item, data, metadata, thumbnail, url, sharing, appinfo, related, service or all
         fmt (str): Format for export of service (only works for the following types "Feature Service", "Vector Tile Service", "Scene Service")
         logger (logging): logging object to pass to tool for logging purposes
     """
@@ -32,11 +41,43 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, logger: 
         # Update status
         logger.info("  > Item not found")
         # End module
-        return
+        return Response.ItemNotFound
+    # Setup item dir
+    item_dir = os.path.join(directory, itemid)
+    # Process modification flag
+    if skip_unmodified:
+        # Get timestamp file
+        try:
+            with open(f"{item_dir}/lastupdate.ts", 'r') as f:
+                last_backedup = json.load(f)
+        except IOError:
+            # Default to the start of time if timestamp file does not exist
+            last_backedup = 0
+        # Get last modified date
+        if item["type"] == "Feature Service":
+            # Check for max datestamp from feature service
+            try:
+                last_modified = max(
+                    i.properties.editingInfo.lastEditDate
+                    for i
+                    in item.layers + item.tables
+                )
+            except ValueError:
+                last_modified = sys.maxint
+        else:
+            # Check item against existing item
+            last_modified = item['modified']
+        # Check if item has been modified
+        if last_modified <= last_backedup:
+            # Bypass as item has not been modified since last backup
+            logger.info("  > Item not modified")
+            return Response.ItemNotModified
     # Clear our old and setup new dir
-    item_dir = util.setup_dir(directory, itemid)
+    util.setup_dir(item_dir)
     # Backup status
     logger.debug("  Exporting:")
+    # Write out timestamp file
+    util.export_obj(f"{item_dir}/lastupdate.ts", int(time.time() * 1000))
     # Check if requested
     if "item" in options or "all" in options:
         # Remove number of views as it changes each request and is always picked up in GIT change tracking
@@ -50,10 +91,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, logger: 
         # Update status
         logger.debug("  > Data")
         # Backup meta
-        datapath = item.download(item_dir, "data.json")
-        # Move meta file
-        if datapath:
-            os.rename(datapath, datapath.replace(item["title"], "data"))
+        item.download(item_dir)
     # Check if requested
     if "metadata" in options or "all" in options:
         # Update status
@@ -66,7 +104,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, logger: 
         # Update status
         logger.debug("  > Thumbnail")
         # Backup meta
-        item.download_thumbnail(os.path.join(item_dir, "thumbnails"))
+        item.download_thumbnail(os.path.join(item_dir, "thumbnail"))
     # Check if requested
     if "url" in options or "all" in options:
         # Update status
@@ -74,7 +112,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, logger: 
         # Backup url file
         util.export_url(f"{item_dir}/item.url", item.homepage)
     # Check if requested
-    if "sharing" in options or "all" in options:
+    if "sharing" in options or "all" in options: 
         # Update status
         logger.debug("  > Sharing")
         # Backup sharing
@@ -131,25 +169,29 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, logger: 
             related_items[r]["backward"] = item.related_items(r, "reverse")
         # Write related items to file
         util.export_obj(f"{item_dir}/related.json", related_items)
+    # Get requested fmt
+    try:
+        fmt = agol.EXPORT_FORMATS[fmt]
+    except KeyError:
+        fmt = agol.EXPORT_FORMATS["gdb"]
     # Check if requested
-    if "service" in options or "all" in options:
+    if ("service" in options or "all" in options) and fmt:
         # Check type is compatible
         if item["type"] in ["Feature Service", "Vector Tile Service", "Scene Service"]:
             # Update Status
             logger.debug("  > Service")
-            # Get requested fmt
-            try:
-                fmt = agol.EXPORT_FORMATS[fmt]
-            except KeyError:
-                fmt = agol.EXPORT_FORMATS["gdb"]
             # Setup title
-            title = f"{item['name']}_tmpbackup"
+            postfix = "_tmpbackup"
+            title = f"{item['name']}{postfix}"
             # Setup export
-            export = item.export(title=title, export_fmt=fmt, wait=True, overwrite=True)
+            export = item.export(title=title, export_format=fmt, wait=True, overwrite=True)
             # Grab data
-            export.download(item_dir)
+            file_data = export.download(item_dir)
+            os.rename(file_data, file_data.replace(postfix, ''))
             # Delete export
             export.delete()
+    # Return success
+    return Response.Success
 
 
 # Facilitate access to module standalone
@@ -192,6 +234,12 @@ if __name__ == "__main__":
         nargs="+",
     )
     parser.add_argument(
+        "-s",
+        action="store_true",
+        dest="skipmodified",
+        help="Skip modified items (works when backing up to the same location as last time)",
+    )
+    parser.add_argument(
         "-v",
         action="store_true",
         dest="verbose",
@@ -222,7 +270,9 @@ if __name__ == "__main__":
             # Update status
             log.post(logger, f" - Collecting Item {args.itemid}")
             # Run script with args
-            run(ago.gis, itemid=args.itemid, directory=args.outputdir, fmt=args.format, options=args.options, logger=logger)
+            res = run(ago.gis, itemid=args.itemid, directory=args.outputdir, fmt=args.format, options=args.options, skip_unmodified=args.skipmodified, logger=logger)
+            # Update status
+            log.post(logger, f" - {res}")
     except Exception:
         # Catch everything else
         log.post(logger, "Script failed unexpectedly", logging.ERROR)

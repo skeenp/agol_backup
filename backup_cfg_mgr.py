@@ -17,7 +17,7 @@ import pathlib
 
 # TODO: Multithreading on item load
 # TODO: Filtering
-
+# TODO: Remove packages offline packages from Field Maps
 
 PROJECT_PATH = pathlib.Path(__file__).parent
 CONFIG_PATH = f"{PROJECT_PATH}/config"
@@ -31,7 +31,7 @@ class BackupMgrGUI:
     """
     _cfg = CONFIG_BLANK
     _cfgpath = ""
-    _items = []
+    _items = {}
     _ago = None
 
     def __init__(self, master: tk.Tk, logger: logging):
@@ -45,13 +45,14 @@ class BackupMgrGUI:
         self._gui = master
         self._gui.geometry('1240x640')
         self._gui.minsize(width=480, height=360)
-        self._gui.iconbitmap('img/backup_gui.ico')
+        self._gui.iconbitmap('img/backup_cfg_mgr.ico')
         self._gui.wm_title("Backup Manager GUI")
         self._gui.columnconfigure(0, weight=1)
-        self._gui.rowconfigure(7, weight=1)
+        self._gui.rowconfigure(8, weight=1)
         # Capture logger
         self._logger = logger
-        # Setup admin checkbox defaults
+        # Setup vars
+        self._exportadmin = tk.BooleanVar(value=True)
         self._exportme = tk.BooleanVar(value=True)
         self._exportusers = tk.BooleanVar(value=True)
         self._exportgroups = tk.BooleanVar(value=True)
@@ -141,59 +142,71 @@ class BackupMgrGUI:
         lbl_headeradmin = tk.Label(self._gui)
         lbl_headeradmin.configure(font='{Arial} 11 {bold}', justify='left', text='Admin Item Config')
         lbl_headeradmin .grid(column=0, row=4, padx=2, pady=2, sticky='w', columnspan=2)
+        chk_exportadmin = tk.Checkbutton(self._gui)
+        chk_exportadmin.configure(font='{Arial} 9 {}', justify='left', text='Export Admin Data', variable=self._exportadmin)
+        chk_exportadmin.grid(column=0, row=5, sticky='w')
         # Setup admin frame
-        frame_admin = tk.Frame(self._gui)
-        frame_admin.grid(column=0, row=5, padx=2, pady=2, sticky='ew', columnspan=2)
-        frame_admin.columnconfigure(4, weight=1)
-        frame_admin.columnconfigure(6, weight=1)
+        self.frame_admin = tk.Frame(self._gui)
+        self.frame_admin.grid(column=0, row=6, padx=2, pady=2, sticky='ew', columnspan=2)
+        self.frame_admin.columnconfigure(4, weight=1)
+        self.frame_admin.columnconfigure(6, weight=1)
         # Setup admin choices
-        chk_exportme = tk.Checkbutton(frame_admin)
+        chk_exportme = tk.Checkbutton(self.frame_admin)
         chk_exportme.configure(font='{Arial} 9 {}', justify='left', text='Export Self Defn', variable=self._exportme)
-        chk_exportme.grid(column=0, row=0, sticky='ew')
-        chk_exportusers = tk.Checkbutton(frame_admin)
+        chk_exportme.grid(column=1, row=0, sticky='ew')
+        chk_exportusers = tk.Checkbutton(self.frame_admin)
         chk_exportusers.configure(font='{Arial} 9 {}', justify='left', text='Export User Defns', variable=self._exportusers)
-        chk_exportusers.grid(column=1, row=0, sticky='ew')
-        chk_exportgroups = tk.Checkbutton(frame_admin)
+        chk_exportusers.grid(column=2, row=0, sticky='ew')
+        chk_exportgroups = tk.Checkbutton(self.frame_admin)
         chk_exportgroups.configure(font='{Arial} 9 {}', justify='left', text='Export Group Defns', variable=self._exportgroups)
-        chk_exportgroups.grid(column=2, row=0, sticky='ew', padx=2, pady=2)
+        chk_exportgroups.grid(column=3, row=0, sticky='ew', padx=2, pady=2)
+        # Setup admin trace
+        self._exportadmin.trace("w", self._toggleadmin)
         # Setup options
-        lbl_options = tk.Label(frame_admin)
+        lbl_options = tk.Label(self.frame_admin)
         lbl_options.configure(font='{Arial} 9 {}', text='Options:')
-        lbl_options.grid(column=3, row=0, sticky='ew', padx=2, pady=2)
-        txt_options = tk.Entry(frame_admin)
+        lbl_options.grid(column=4, row=0, sticky='ew', padx=2, pady=2)
+        txt_options = tk.Entry(self.frame_admin)
         txt_options.configure(font='{Arial} 8 {}', textvariable=self._adminoptions)
-        txt_options.grid(column=4, row=0, sticky='ew', padx=2, pady=2)
+        txt_options.grid(column=5, row=0, sticky='ew', padx=2, pady=2)
         # Setup frequency
-        lbl_frequency = tk.Label(frame_admin)
+        lbl_frequency = tk.Label(self.frame_admin)
         lbl_frequency.configure(font='{Arial} 9 {}', text='Frequency:')
-        lbl_frequency.grid(column=5, row=0, sticky='ew', padx=2, pady=2)
-        cmb_frequency = ttk.Combobox(frame_admin, width=6)
+        lbl_frequency.grid(column=6, row=0, sticky='ew', padx=2, pady=2)
+        cmb_frequency = ttk.Combobox(self.frame_admin, width=6)
         cmb_frequency.configure(font='{Arial} 8 {}', values=list(FREQUENCY_OPTIONS.keys()), textvariable=self._adminfreq)
-        cmb_frequency.grid(column=6, row=0, sticky='ew', padx=2, pady=2)
+        cmb_frequency.grid(column=7, row=0, sticky='ew', padx=2, pady=2)
         # Setup hours
-        lbl_hours = tk.Label(frame_admin)
+        lbl_hours = tk.Label(self.frame_admin)
         lbl_hours.configure(font='{Arial} 9 {}', text='Hours (Diff):')
-        lbl_hours.grid(column=7, row=0, sticky='ew', padx=2, pady=2)
-        self.txt_hours = tk.Entry(frame_admin)
+        lbl_hours.grid(column=8, row=0, sticky='ew', padx=2, pady=2)
+        self.txt_hours = tk.Entry(self.frame_admin)
         self.txt_hours.configure(font='{Arial} 8 {}', textvariable=self._adminhours)
-        self.txt_hours.grid(column=8, row=0, sticky='ew', padx=2, pady=2)
+        self.txt_hours.grid(column=9, row=0, sticky='ew', padx=2, pady=2)
         # Setup frequcncy command
         cmb_frequency.bind('<<ComboboxSelected>>', lambda e, source_var=self._adminfreq, target_ctl=self.txt_hours, target_var=self._adminhours: self._populate_hours(source_var, target_var, target_ctl))
         # Setup items header
         hdr_items = tk.Label(self._gui)
         hdr_items.configure(font='{Arial} 11 {bold}', justify='left', text='Item Config')
-        hdr_items.grid(column=0, row=6, padx=2, pady=2, sticky='w', columnspan=2)
+        hdr_items.grid(column=0, row=7, padx=2, pady=2, sticky='w', columnspan=2)
         btn_connect = tk.Button(self._gui)
         btn_connect.configure(font='{Arial} 8 {}', text='Refresh', command=self._loaditems)
-        btn_connect.grid(column=1, row=6, sticky='ew', padx=2, pady=2,)
+        btn_connect.grid(column=1, row=7, sticky='ew', padx=2, pady=2,)
         # Setup items frame
         self.frame_items = TkScrolledFrame(self._gui, scrolltype='both')
         self.frame_items.innerframe.columnconfigure(0, weight=1)
         self.frame_items.innerframe.configure(borderwidth=2)
         self.frame_items.configure(usemousewheel=True)
-        self.frame_items.grid(column=0, row=7, padx=2, pady=2, sticky='nesw', columnspan=2)
+        self.frame_items.grid(column=0, row=8, padx=2, pady=2, sticky='nesw', columnspan=2)
         # Set main window
         self.mainwindow = self._gui
+
+    def _toggleadmin(self, n, m, x):
+        # Conditionally show/hide admin window
+        if self._exportadmin.get():
+            self.frame_admin.grid()
+        else:
+            self.frame_admin.grid_remove()
 
     def _populate_hours(self, source_var: tk.StringVar, target_var: tk.StringVar, target_ctl: tk.Entry):
         """Handler to populate hours on the form based on frequency combobox
@@ -207,7 +220,7 @@ class BackupMgrGUI:
         freq = source_var.get()
         hours = FREQUENCY_OPTIONS[freq]
         # Update hours
-        if hours:
+        if hours or (hours == 0.0):
             target_var.set(hours)
             target_ctl.configure(state="readonly")
         else:
@@ -289,22 +302,28 @@ class BackupMgrGUI:
         self._cfg["pword"] = self._pword.get()
         self._cfg["uname"] = self._uname.get()
         self._cfg["portal"] = self._portal.get()
-        # Update admin
-        admin = self._cfg['admin']
-        # Update admin components
-        comp = []
-        if self._exportme.get():
-            comp.append('me')
-        if self._exportusers.get():
-            comp.append('users')
-        if self._exportgroups.get():
-            comp.append('groups')
-        admin['components'] = comp
-        # Update admin options
-        admin['options'] = self._adminoptions.get().split(',')
-        # Update admin hours
-        admin['hours_diff'] = self._adminhours.get()
-        # Update items
+        # Check if admin is to be exported
+        if self._exportadmin.get():
+            # Update admin
+            admin = self._cfg['admin']
+            # Update admin components
+            comp = []
+            if self._exportme.get():
+                comp.append('me')
+            if self._exportusers.get():
+                comp.append('users')
+            if self._exportgroups.get():
+                comp.append('groups')
+            admin['components'] = comp
+            # Update admin options
+            admin['options'] = self._adminoptions.get().split(',')
+            # Update admin hours
+            admin['hours_diff'] = self._adminhours.get()
+            # Update items
+        else:
+            # Set admin to blank
+            self._cfg['admin'] = None
+        # Process items
         for k, i in self._items.items():
             # Check if export is requested
             if i['selected'].get():
@@ -437,23 +456,26 @@ class BackupMgrGUI:
         self._pword.set(self._cfg["pword"])
         self._uname.set(self._cfg["uname"])
         self._portal.set(self._cfg["portal"])
-        # Get admin components and options
-        comps = self._cfg['admin']['components']
-        # Update admin options
-        self._exportme.set('me' in comps or 'all' in comps)
-        self._exportusers.set('users' in comps or 'all' in comps)
-        self._exportgroups.set('groups' in comps or 'all' in comps)
-        self._adminoptions.set(','.join(self._cfg['admin']['options']))
-        # Load frequency/hours
-        hours = self._cfg['admin']['hours_diff']
-        freq = [k for k, v in FREQUENCY_OPTIONS.items() if v == hours]
-        if freq:
-            self._adminfreq.set(freq[0])
-            self.txt_hours.configure(state="readonly")
-        else:
-            self._adminfreq.set('Custom')
-            self.txt_hours.configure(state="normal")
-        self._adminhours.set(self._cfg['admin']['hours_diff'])
+        self._exportadmin.set(not self._cfg['admin'] is None)
+        # Load admin
+        if self._cfg['admin']:
+            # Get admin components and options
+            comps = self._cfg['admin']['components']
+            # Update admin options
+            self._exportme.set('me' in comps or 'all' in comps)
+            self._exportusers.set('users' in comps or 'all' in comps)
+            self._exportgroups.set('groups' in comps or 'all' in comps)
+            self._adminoptions.set(','.join(self._cfg['admin']['options']))
+            # Load frequency/hours
+            hours = self._cfg['admin']['hours_diff']
+            freq = [k for k, v in FREQUENCY_OPTIONS.items() if v == hours]
+            if freq:
+                self._adminfreq.set(freq[0])
+                self.txt_hours.configure(state="readonly")
+            else:
+                self._adminfreq.set('Custom')
+                self.txt_hours.configure(state="normal")
+            self._adminhours.set(self._cfg['admin']['hours_diff'])
         # If uname, pword and portal is supplied, test connection
         if not (self._cfg["pword"] is None or self._cfg["uname"] is None or self._cfg["portal"] is None):
             self._agol_connect(init=True)
@@ -577,12 +599,12 @@ class BackupMgrGUI:
                 # Setup item format
                 export_default = 'none'
                 # Setup export formats
-                if i['type'] == "Feature Service":
+                if i['type'] == "Feature Service" and i['name']:
                     export_types = [f for f in agol.EXPORT_FORMATS if not f == 'spkg']
                     export_default = 'fgdb'
-                elif i['type'] == "Vector Tile Service":
+                elif i['type'] == "Vector Tile Service" and i['name']:
                     export_types = ['none', 'vtpk']
-                elif i['type'] == "Scene Service":
+                elif i['type'] == "Scene Service" and i['name']:
                     export_types = ['none', 'spkg']
                 else:
                     export_types = ['none']

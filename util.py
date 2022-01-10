@@ -5,25 +5,20 @@ import shutil
 import json
 
 
-def setup_dir(out_dir: str, item_id: str):
+def setup_dir(item_dir: str):
     """Removes existing dir and recreates a folder to hold new data, primarily used to facilitate change tracking
 
     Args:
-        out_dir (str): Output directory
-        item_id (str): ID of item (i.e. folder) to setup
+        item_dir (str): Item directory to setup
 
     Returns:
         [str]: Path to directory setus in function
     """
-    # Setup output path
-    item_dir = os.path.join(out_dir, item_id)
     # Check if path exists
     if os.path.exists(item_dir):
         shutil.rmtree(item_dir)
     # Build item folder
     os.makedirs(item_dir)
-    # Return folder path
-    return item_dir
 
 
 def clean_dict(d: dict):
@@ -62,7 +57,11 @@ def clean_list(d: list):
         data.append(itm.__dict__.copy())
     for d in data:
         for k in list(d.keys()):
+            # Remove sys variables
             if k.startswith("_"):
+                del d[k]
+            # Remove last login and numviews as it defaults essentially to now/last update + 1 and is always picked up in GIT change tracking
+            if k in ['lastLogin', 'numViews']:
                 del d[k]
     # Return cleaned list
     return data

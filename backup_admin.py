@@ -34,8 +34,10 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
             os.makedirs(group_dir)
         # Process groups
         for group in gis.groups.search():
+            # Setup group path
+            grp_dir = os.path.join(group_dir, group["id"])
             # Setup group dir path
-            grp_dir = util.setup_dir(group_dir, group["id"])
+            util.setup_dir(grp_dir)
             # Get group if requested
             if "item" in options or "all" in options:
                 # Update status
@@ -53,7 +55,13 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
                 # Update status
                 logger.debug("  > Items")
                 grp_items = f"{grp_dir}/items.json"
-                util.export_agolclass_list(grp_items, group.content(9999))
+                # Setup items var
+                items = []
+                # Preporocess items
+                for i in group.content(9999):
+                    # Add item to list
+                    items.append(i)
+                util.export_agolclass_list(grp_items, items)
             # Get URL if requested
             if "url" in options or "all" in options:
                 # Update status
@@ -74,13 +82,16 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
             os.makedirs(users_dir)
         # Process groups
         for user in gis.users.search():
+            # Setup user path
+            usr_dir = os.path.join(users_dir, user["id"])
             # Setup group dir path
-            usr_dir = util.setup_dir(users_dir, user["id"])
+            util.setup_dir(usr_dir)
             # Update user groups if requested
             if "item" in options or "all" in options:
                 # Update status
                 logger.debug("  > User Info")
                 usr_path = f"{usr_dir}/user.json"
+                # Export data
                 util.export_agolclass(usr_path, user)
             # Save URL if requested
             if "url" in options or "all" in options:
@@ -103,15 +114,16 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
             os.makedirs(me_dir)
         # Process user
         user = gis.users.me
-        # Remove last login as it defaults essentially to now and is always picked up in GIT change tracking
-        del user["lastLogin"]
+        # Setup user path
+        usr_dir = os.path.join(me_dir, user["id"])
         # Setup group dir path
-        usr_dir = util.setup_dir(me_dir, user["id"])
+        util.setup_dir(usr_dir)
         # Update user if requested
         if "item" in options or "all" in options:
             # Update status
             logger.debug("  > User Info")
             usr_path = f"{usr_dir}/user.json"
+            # Export data
             util.export_agolclass(usr_path, user)
         # Get groups if requested
         if "groups" in options or "all" in options:
@@ -142,7 +154,13 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
             # Update status
             logger.debug("  > Items")
             usr_cnt = f"{usr_dir}/items.json"
-            util.export_agolclass_list(usr_cnt, user.items(max_items=9999))
+            # Setup items var
+            items = []
+            # Preporocess items
+            for i in user.items(max_items=9999):
+                # Get item dict
+                items.append(i)
+            util.export_agolclass_list(usr_cnt, items)
         # Save URL if requested
         if "url" in options or "all" in options:
             # Update status
