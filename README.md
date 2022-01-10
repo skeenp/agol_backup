@@ -2,6 +2,8 @@
 
 This project provides scripts and a windows exe which allows you to easily manage and schedule backups to your content on ArcGIS Online. 
 
+NOTE: This project is still in development. The code should work but no garantees are provided.
+
 ## Getting Started
 
 These instructions will give you a copy of the project to get it up and running on your local machine for development and testing purposes. See deployment for notes on deploying the project on a live system.
