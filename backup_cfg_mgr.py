@@ -498,7 +498,7 @@ class BackupMgrGUI:
         # Clear items
         self._clearitems()
         # Check GIS has been loaded
-        if self._ago.gis:
+        if self._ago and self._ago.gis:
             # Setup item grid headers
             lbl_itm_name = tk.Label(self.frame_items.innerframe)
             lbl_itm_name.configure(font='{Arial} 9 {bold}', text='Item')
