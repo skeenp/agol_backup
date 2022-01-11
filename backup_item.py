@@ -11,12 +11,14 @@ import agol
 import pathlib
 import json
 import time
+import sys
 
 
 class Response(Enum):
     Success = 1
     ItemNotFound = 2
     ItemNotModified = 3
+    ExportNotSupported = 4
 
 
 def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unmodified: bool, logger: logging):
@@ -112,7 +114,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
         # Backup url file
         util.export_url(f"{item_dir}/item.url", item.homepage)
     # Check if requested
-    if "sharing" in options or "all" in options: 
+    if "sharing" in options or "all" in options:
         # Update status
         logger.debug("  > Sharing")
         # Backup sharing
@@ -183,13 +185,17 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
             # Setup title
             postfix = "_tmpbackup"
             title = f"{item['name']}{postfix}"
-            # Setup export
-            export = item.export(title=title, export_format=fmt, wait=True, overwrite=True)
-            # Grab data
-            file_data = export.download(item_dir)
-            os.rename(file_data, file_data.replace(postfix, ''))
-            # Delete export
-            export.delete()
+            try:
+                # Setup export
+                export = item.export(title=title, export_format=fmt, wait=True, overwrite=True)
+                # Grab data
+                file_data = export.download(item_dir)
+                os.rename(file_data, file_data.replace(postfix, ''))
+                # Delete export
+                export.delete()
+            except Exception:
+                logger.exception("  > Service Export Failed")
+            return Response.ExportNotSupported
     # Return success
     return Response.Success
 
@@ -248,14 +254,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-q",
         action="store_false",
-        dest="log",
+        dest="nolog",
         help="Do not log script progress to file",
     )
     # Parse args
     args = parser.parse_args()
     # Setup logger
     log_level = logging.DEBUG if args.verbose else logging.INFO
-    logger = log.setup("backup_item", app_dir=app_dir, active=args.log, level=log_level)
+    logger = log.setup("backup_item", app_dir=app_dir, active=args.nolog, level=log_level)
     # Update script log
     tsstart = datetime.now()
     tsstart_str = tsstart.strftime("%m/%d/%Y %H:%M:%S")

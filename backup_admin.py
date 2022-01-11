@@ -223,14 +223,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-q",
         action="store_false",
-        dest="log",
+        dest="nolog",
         help="Do not log script progress to file",
     )
     # Parse args
     args = parser.parse_args()
     # Setup logger
     log_level = logging.DEBUG if args.verbose else logging.INFO
-    logger = log.setup("backup_admin", active=args.log, app_dir=app_dir, level=log_level)
+    logger = log.setup("backup_admin", active=args.nolog, app_dir=app_dir, level=log_level)
     # Update script log
     tsstart = datetime.now()
     tsstart_str = tsstart.strftime("%m/%d/%Y %H:%M:%S")
