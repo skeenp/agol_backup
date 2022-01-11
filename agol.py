@@ -70,6 +70,20 @@ class Agol:
         for r in requests:
             # Collect items
             items = self._gis.users.me.items(folder=r, max_items=9999)
+
+            def _gettitle(i: dict):
+                """Sort function
+
+                Args:
+                    i (dict): Item as dict to get key for sorting
+
+                Returns:
+                    str: Value for sort function
+                """
+                return f"{i['title']}_{i['type']}"
+            # Sort list
+            items.sort(key=_gettitle)
+            # Add folder to each item
             for itm in items:
                 itm['folder'] = r['title']
             # Build result list
