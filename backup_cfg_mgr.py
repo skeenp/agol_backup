@@ -127,7 +127,6 @@ class BackupMgrGUI:
         self.txt_portal = tk.Entry(frame_connection)
         self.txt_portal.configure(font='{Arial} 8 {}', textvariable=self._portal)
         self.txt_portal.grid(column=1, padx=2, pady=2, row=7, sticky='ew', columnspan=3)
-        self.txt_portal.bind('<KeyRelease>', self._agol_disconnect)
         btn_connect = tk.Button(frame_connection)
         btn_connect.configure(font='{Arial} 8 {}', text='Connect', command=self._agol_connect)
         btn_connect.grid(column=4, row=7, sticky='ew', padx=2, pady=2,)
@@ -401,6 +400,8 @@ class BackupMgrGUI:
             self.txt_portal.configure(foreground='#d7191c')
             self.txt_uname.configure(foreground='#d7191c')
             self.txt_pword.configure(foreground='#d7191c')
+            # Clear items
+            self._clearitems()
             # Show message if not init
             if not init:
                 messagebox.showwarning('AGOL Connection Failed', 'Please check username, portal and password.')
@@ -409,9 +410,11 @@ class BackupMgrGUI:
             self.txt_portal.configure(foreground='#1a9641')
             self.txt_uname.configure(foreground='#1a9641')
             self.txt_pword.configure(foreground='#1a9641')
-            # Show message if not init
-            if not init:
-                messagebox.showinfo('AGOL Connection Success', f'Connection to {self._portal.get()} successful!')
+            # Reload items
+            self._loaditems(init=True)
+            # Show message if not init (Disabled, loading of items and changing text colour implies connection successful)
+            #if not init:
+            #    messagebox.showinfo('AGOL Connection Success', f'Connection to {self._portal.get()} successful!')
 
     def _agol_disconnect(self, e=None):
         """Disconnects to AGOL or Portal instance
@@ -629,7 +632,7 @@ class BackupMgrGUI:
             # Check if this is the call to load items on init or if its after init
             if not init:
                 # Display message
-                messagebox.warning('Not connected to AGOL', 'Please connect to your portal using the button in the Connection Properties section above.')
+                messagebox.showwarning('Not connected to AGOL', 'Please connect to your portal using the button in the Connection Properties section above.')
 
     def _select_item(self, id):
         """Helper function to select an item
