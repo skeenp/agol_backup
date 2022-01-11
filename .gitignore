@@ -6,3 +6,4 @@ build
 dist
 scripts
 *.spec
+.history

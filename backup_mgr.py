@@ -66,20 +66,44 @@ def run(cfg_paths: list, logger: logging):
             if "admin" in cfg and cfg['admin']:
                 # Update status
                 log.post(logger, 'Collecting Admin Items')
+                # Setup admin var
+                admin = cfg['admin']
                 # Get options
-                if 'options' in cfg['admin']:
-                    options = cfg['admin']["options"]
+                if 'options' in admin:
+                    options = admin["options"]
                 else:
                     options = 'all'
                 # Get options
-                if 'components' in cfg['admin']:
-                    components = cfg['admin']["components"]
+                if 'components' in admin:
+                    components = admin["components"]
                 else:
                     components = 'all'
-                # Backup admin item
-                backup_admin.run(ago.gis, backup_dir, components, options, logger)
-                # Update last backup time
-                cfg['admin']["last"] = datetime.now().isoformat()
+                # Get last change date
+                last_run = datetime.fromisoformat(admin["last"]) if 'last' in admin else 0
+                # Check for due date
+                if not os.path.exists(backup_dir):
+                    # If item folder does mark as due
+                    item_due = True
+                elif admin["hours_diff"] > 0.0:
+                    # Setup diff with a 2% margin
+                    diff = admin * 0.98
+                    # Check if item is due based on last run and hours_diff
+                    item_duedate = last_run + timedelta(hours=diff)
+                    item_due = item_duedate < datetime.now()
+                else:
+                    item_due = True
+                # Continue to next item if not due
+                if item_due:
+                    # Backup admin item
+                    backup_admin.run(ago.gis, backup_dir, components, options, logger)
+                    # Update last backup time
+                    admin["last"] = datetime.now().isoformat()
+                elif admin["hours_diff"] == 0.0:
+                    # Update status
+                    log.post(logger, "  > Skipped, item set to ignore (hours_diff=0.0)")
+                else:
+                    # Update status
+                    log.post(logger, "  > Skipped, not due it")
             try:
                 # Update status
                 log.post(logger, "Processing Items")
@@ -90,15 +114,22 @@ def run(cfg_paths: list, logger: logging):
                     log.post(logger, f" - {itemid}")
                     # Check if backup is not yet due
                     itmdir = os.path.join(backup_dir, "items")
+                    # Get last change date
+                    try:
+                        # Load timestamp file
+                        with open(f"{itmdir}/lastupdate.ts", 'r') as f:
+                            last_run = datetime.fromisoformat(json.load(f))
+                    except IOError:
+                        # Default to the start of time if timestamp file does not exist
+                        last_run = 0
                     # Check for due date
                     if not os.path.exists(itmdir):
                         # If item folder does mark as due
                         item_due = True
-                    elif item["hours_diff"] > 0.0 and "last" in item:
+                    elif item["hours_diff"] > 0.0:
                         # Setup diff with a 2% margin
                         diff = item["hours_diff"] * 0.98
                         # Check if item is due based on last run and hours_diff
-                        last_run = datetime.fromisoformat(item['last'])
                         item_duedate = last_run + timedelta(hours=diff)
                         item_due = item_duedate < datetime.now()
                     else:
@@ -125,8 +156,6 @@ def run(cfg_paths: list, logger: logging):
                     # Update status if appropriate
                     if res.value > 1:
                         log.post(logger, f"  > Skipped, {res}")
-                    # Update last backup time
-                    item["last"] = datetime.now().isoformat()
                     # Reset hours_diff if once requested
                     if item["hours_diff"] == -1.0:
                         item["hours_diff"] == 0.0
