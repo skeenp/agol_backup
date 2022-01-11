@@ -642,12 +642,12 @@ class BackupMgrGUI:
                 # Setup item format
                 export_default = 'none'
                 # Setup export formats
-                if i['type'] == "Feature Service" and i['name']:
+                if i['type'] == "Feature Service":
                     export_types = [f for f in agol.EXPORT_FORMATS if not f == 'spkg']
                     export_default = 'fgdb'
-                elif i['type'] == "Vector Tile Service" and i['name']:
+                elif i['type'] == "Vector Tile Service":
                     export_types = ['none', 'vtpk']
-                elif i['type'] == "Scene Service" and i['name']:
+                elif i['type'] == "Scene Service":
                     export_types = ['none', 'spkg']
                 else:
                     export_types = ['none']

@@ -184,7 +184,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
             logger.debug("  > Service")
             # Setup title
             postfix = "_tmpbackup"
-            title = f"{item['name']}{postfix}"
+            title = f"{item['title']}{postfix}"
             try:
                 # Setup export
                 export = item.export(title=title, export_format=fmt, wait=True, overwrite=True)
