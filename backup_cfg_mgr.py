@@ -543,31 +543,31 @@ class BackupMgrGUI:
         # Check GIS has been loaded
         if self._ago and self._ago.gis:
             # Setup item grid headers
-            lbl_itm_name = tk.Label(self.frame_items.innerframe)
+            lbl_itm_name = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_name.configure(font='{Arial} 8 {bold}', text='Item')
             lbl_itm_name.grid(column=0, row=0, sticky='w')
-            lbl_itm_folder = tk.Label(self.frame_items.innerframe)
+            lbl_itm_folder = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_folder.configure(font='{Arial} 8 {bold}', text='Folder')
             lbl_itm_folder.grid(column=1, row=0, sticky='w')
-            lbl_itm_type = tk.Label(self.frame_items.innerframe)
+            lbl_itm_type = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_type.configure(font='{Arial} 8 {bold}', text='Type')
             lbl_itm_type.grid(column=2, row=0, sticky='w')
-            lbl_itm_link = tk.Label(self.frame_items.innerframe)
+            lbl_itm_link = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_link.configure(font='{Arial} 8 {bold}', text='ID')
             lbl_itm_link.grid(column=3, row=0, sticky='w')
-            lbl_itm_lastupd = tk.Label(self.frame_items.innerframe)
+            lbl_itm_lastupd = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_lastupd.configure(font='{Arial} 8 {bold}', text='Last Updated')
             lbl_itm_lastupd.grid(column=4, row=0, sticky='w')
-            lbl_itm_freq = tk.Label(self.frame_items.innerframe)
+            lbl_itm_freq = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_freq.configure(font='{Arial} 8 {bold}', text='Freq')
             lbl_itm_freq.grid(column=5, row=0, sticky='w')
-            lbl_itm_hours = tk.Label(self.frame_items.innerframe)
+            lbl_itm_hours = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_hours.configure(font='{Arial} 8 {bold}', text='Hours')
             lbl_itm_hours.grid(column=6, row=0, sticky='w')
-            lbl_itm_options = tk.Label(self.frame_items.innerframe)
+            lbl_itm_options = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_options.configure(font='{Arial} 8 {bold}', text='Options')
             lbl_itm_options.grid(column=7, row=0, sticky='w')
-            lbl_itm_format = tk.Label(self.frame_items.innerframe)
+            lbl_itm_format = tk.Label(self.frame_items.innerframe, bg='white')
             lbl_itm_format.configure(font='{Arial} 8 {bold}', text='Format')
             lbl_itm_format.grid(column=8, row=0, sticky='w')
             # Setup row items
@@ -587,20 +587,20 @@ class BackupMgrGUI:
                 itm['id'] = i['id']
                 itm['row'] = row
                 itm['selected'] = tk.IntVar(value=1 if itmcfg else 0)
-                itm['chk_itm'] = tk.Checkbutton(self.frame_items.innerframe, text=i['title'], variable=itm['selected'])
+                itm['chk_itm'] = tk.Checkbutton(self.frame_items.innerframe, text=i['title'], variable=itm['selected'], bg='white')
                 itm['chk_itm'].configure(font='{Arial} 8 {}')
                 itm['chk_itm'].grid(column=0, row=row, sticky='w', padx=2, pady=2)
                 itm['selected'].trace('w', lambda name, index, mode, id=itm['id']: self._select_item(id))
                 # Setup item id
-                itm['txt_itm_folder'] = tk.Label(self.frame_items.innerframe)
+                itm['txt_itm_folder'] = tk.Label(self.frame_items.innerframe, bg='white')
                 itm['txt_itm_folder'].configure(font='{Arial} 8 {}', text=i['folder'])
                 itm['txt_itm_folder'].grid(column=1, row=row, sticky='w', padx=2, pady=2,)
                 # Setup item type
-                itm['txt_itm_type'] = tk.Label(self.frame_items.innerframe)
+                itm['txt_itm_type'] = tk.Label(self.frame_items.innerframe, bg='white')
                 itm['txt_itm_type'].configure(font='{Arial} 8 {}', text=i['type'])
                 itm['txt_itm_type'].grid(column=2, row=row, sticky='w', padx=2, pady=2)
                 # Setup item id
-                itm['txt_itm_id'] = tk.Label(self.frame_items.innerframe)
+                itm['txt_itm_id'] = tk.Label(self.frame_items.innerframe, bg='white')
                 itm['txt_itm_id'].configure(font='{Arial} 8 {}', text=itm['id'])
                 itm['txt_itm_id'].grid(column=3, row=row, sticky='w', padx=2, pady=2,)
                 # Setup item last update flag
@@ -609,7 +609,7 @@ class BackupMgrGUI:
                 else:
                     lastrun = 'Never'
                 itm['last'] = tk.StringVar(value=lastrun)
-                itm['txt_itm_lastupd'] = tk.Label(self.frame_items.innerframe)
+                itm['txt_itm_lastupd'] = tk.Label(self.frame_items.innerframe, bg='white')
                 itm['txt_itm_lastupd'].configure(font='{Arial} 8 {}', text='NA', textvariable=itm['last'])
                 itm['txt_itm_lastupd'].grid(column=4, row=row, sticky='w', padx=2, pady=2)
                 # Setup item freq
@@ -621,7 +621,7 @@ class BackupMgrGUI:
                 hours = itmcfg['hours_diff'] if itmcfg else 168.0
                 # Setup item hours
                 itm['hours_diff'] = tk.DoubleVar(value=hours)
-                itm['txt_itm_hours'] = tk.Entry(self.frame_items.innerframe, width=6)
+                itm['txt_itm_hours'] = tk.Entry(self.frame_items.innerframe, width=6, bg='white')
                 itm['txt_itm_hours'].configure(font='{Arial} 8 {}', relief=tk.FLAT, textvariable=itm['hours_diff'])
                 itm['txt_itm_hours'].grid(column=6, row=row, sticky='w', padx=2, pady=2)
                 # Update frequency
@@ -636,7 +636,7 @@ class BackupMgrGUI:
                 itm['cmb_itm_freq'].bind('<<ComboboxSelected>>', lambda e, source_var=itm['hours_freq'], target_ctl=itm['txt_itm_hours'], target_var=itm['hours_diff']: self._populate_hours(source_var, target_var, target_ctl))
                 # Setup item Options
                 itm['options'] = tk.StringVar(value=','.join(itmcfg['options']) if itmcfg else 'all')
-                itm['txt_itm_options'] = tk.Entry(self.frame_items.innerframe, width=12)
+                itm['txt_itm_options'] = tk.Entry(self.frame_items.innerframe, width=12, bg='white')
                 itm['txt_itm_options'].configure(font='{Arial} 8 {}', relief=tk.FLAT, text='options', textvariable=itm['options'])
                 itm['txt_itm_options'].grid(column=7, row=row, sticky='w', padx=2, pady=2)
                 # Setup item format
