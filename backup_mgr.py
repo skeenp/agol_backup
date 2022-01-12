@@ -159,9 +159,6 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
                         # Update status if appropriate
                         if res.value > 1:
                             log.post(logger, f" > Skipped item, {res}")
-                        # Reset hours_diff if once requested
-                        if item["hours_diff"] == -1.0:
-                            item["hours_diff"] == 0.0
                         # Update last run
                         util.set_ts(os.path.join(itmdir, 'lastupdate.ts'))
                     else:

@@ -23,7 +23,7 @@ PROJECT_PATH = pathlib.Path(__file__).parent
 CONFIG_PATH = f"{PROJECT_PATH}/config"
 TITLE = "Backup Manager GUI"
 CONFIG_BLANK = {"label": "Unnamed", "outdir": '', "portal": "", "pword": "", "uname": "", "admin": {"hours_diff": 168.0, "components": ['all'], "options": ["all"]}, "items": {}}
-FREQUENCY_OPTIONS = {'Ignore': 0.0, 'Once': -1.0, 'Hourly': 1.0, 'Daily': 24.0, 'Weekly': 168.0, 'Fortnightly': 336.0, 'Montly': 730.0, 'Quarterly': 2190.0, 'Yearly': 8760.0, 'Custom': None}
+FREQUENCY_OPTIONS = {'Ignore': 0.0, 'Hourly': 1.0, 'Daily': 24.0, 'Weekly': 168.0, 'Fortnightly': 336.0, 'Montly': 730.0, 'Quarterly': 2190.0, 'Yearly': 8760.0, 'Custom': None}
 
 
 class BackupMgrGUI:
