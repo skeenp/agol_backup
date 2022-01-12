@@ -1,8 +1,28 @@
-# ArcGIS Online Backup Utility V01
+# ArcGIS Online Backup Utility
 
 This project provides scripts and a windows exe which allows you to easily manage and schedule backups to your content on ArcGIS Online. 
 
-NOTE: This project is still in development. The code should work but no garantees are provided.
+***NOTE:*** This project is still in active development. The code should work but no garantees are provided.
+
+- [ArcGIS Online Backup Utility](#arcgis-online-backup-utility)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installing](#installing)
+      - [Setup Virtual Environment](#setup-virtual-environment)
+      - [[Optional] Install ArcGIS API for Python with no dependancies.](#optional-install-arcgis-api-for-python-with-no-dependancies)
+      - [Install requirements](#install-requirements)
+  - [Use](#use)
+    - [Setup & Scheduling](#setup--scheduling)
+    - [Accessing Backups](#accessing-backups)
+    - [Python Scripts](#python-scripts)
+      - [backup_cfg_mgr.py](#backup_cfg_mgrpy)
+      - [backup_mgr.py](#backup_mgrpy)
+      - [backup_item.py](#backup_itempy)
+      - [backup_admin.py](#backup_adminpy)
+    - [Executable](#executable)
+  - [Building Standalong App](#building-standalong-app)
+  - [Authors](#authors)
+  - [Acknoledgements](#acknoledgements)
 
 ## Getting Started
 
@@ -45,7 +65,7 @@ pip install -r requirements.txt
 
 ## Use
 
-This project is provided in two forms, as a windows executable and as a series of python scripts. The executables are just a packaged version of the python scripts.
+The project is provided as a set of python scripts. These can be built using pyinstaller (see below) but are not provided as a part of the project.
 
 ### Setup & Scheduling
 
@@ -53,22 +73,39 @@ To setup an environment for scheduled backups, first build a config file using b
 
 ### Accessing Backups
 
-Backups are committed to a local git repo. Using your preferred git client i.e. [Github Desktop](https://desktop.github.com/), you can access previous versions and updates to data. The script does not manage git folder size, so you will want to keep an eye on the size of your repo and perhaps clean it up periodically to flush old backups.
+Backups are committed to either a local folder or a managed local git repo. If git is enabled, using your preferred git client i.e. [Github Desktop](https://desktop.github.com/), you can access previous versions and updates to data. The script does not manage git folder size, so you will want to keep an eye on the size of your repo and perhaps clean it up periodically to flush old backups.
 
 ### Python Scripts
 
-There are three python scripts available in the project.
+There are four main python scripts available in the project, as outlined below.
+
+#### backup_cfg_mgr.py
+
+This tool manages backs up and ArcGIS Online item to a local folder including definitions, data and features in the requested format
+
+![Screenshot](img/screenshot.png "Screenshot")
+
+```
+optional arguments:
+  -h, --help            show this help message and exit
+  -c [CONFIG], --config [CONFIG]
+                        Config item defining items to backup
+  -v                    Verbose, also logs debug messages
+  -q                    Do not log script progress to file
+```
+
+***NOTE:*** The GUI works, but is slow. It may appear to be locked up whilst connecting to an AGOL/Portal instance with a significant number of items. Patience is a virtue.
 
 #### backup_mgr.py
 This tool manages backs up and ArcGIS Online item to a local folder including definitions, data and features in the requested format
 ```
-positional arguments:
-  config      Config item(s) defining items to backup (see sample config folder)
-
 optional arguments:
-  -h, --help  show this help message and exit
-  -v          Verbose, also logs debug messages
-  -q          Do not log script progress to file
+  -h, --help            show this help message and exit
+  -c CONFIG [CONFIG ...], --config CONFIG [CONFIG ...]
+                        Config item defining items to backup
+  -v                    Verbose, also logs debug messages
+  -r                    Reset items by ignoring timestamps
+  -q                    Do not log script progress to file
 ```
 
 #### backup_item.py
@@ -87,7 +124,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -o {item,data,metadata,thumbnail,url,sharing,appinfo,related,service,all} [{item,data,metadata,thumbnail,url,sharing,appinfo,related,service,all} ...], --options {item,data,metadata,thumbnail,url,sharing,appinfo,related,service,all} [{item,data,metadata,thumbnail,url,sharing,appinfo,related,service,all} ...]
                         Options for export
-  -s                    Skip modified items (works when backing up to the same location as last time)
+  -s                    Skip unmodified items (works when backing up to the same location as last time)
   -v                    Verbose, also logs debug messages
   -q                    Do not log script progress to file
 ```
@@ -105,26 +142,12 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c, --components {groups,users,me,all} [{groups,users,me,all} ...]
+  -c {groups,users,me,all} [{groups,users,me,all} ...], --components {groups,users,me,all} [{groups,users,me,all} ...]
                         Types to export
-  -o,--options  {item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} [{item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} ...],
+  -o {item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} [{item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} ...], --options {item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} [{item,groups,usrtypes,folders,linked,items,url,thumbnail,members,all} ...]
                         Types to export
   -v                    Verbose, also logs debug messages
   -q                    Do not log script progress to file
-```
-
-#### backup_cfg_mgr.py
-
-This manages config files for backup_mgr
-
-```
-positional arguments:
-  config      Config item defining items to backup (see sample config folder)
-
-optional arguments:
-  -h, --help  show this help message and exit
-  -v          Verbose, also logs debug messages
-  -q          Do not log script progress to file
 ```
 
 ### Executable
@@ -134,25 +157,15 @@ The execuatables mirror the definition of scripts above.
 
 ## Building Standalong App
 
-To build a standalone version of the app, compile with pyinstaller
-``` CMD
-# Backup Manager
-pyinstaller --noconfirm --onefile --console --icon "img/backup_gui.ico" --add-data "certifi;certifi"  "backup_mgr.py"
-
-#Backup Item (Optional)
-pyinstaller --noconfirm --onefile --console --icon "img/backup_gui.ico" --add-data "certifi;certifi"  "backup_item.py"
-
-#Backup Item (Optional)
-pyinstaller --noconfirm --onefile --console --icon "img/backup_gui.ico" --add-data "certifi;certifi"  "backup_admin.py"
+To build a standalone apps, compile with pyinstaller. The below should build the four apps into executables in the 'dist' folder. These executables will work on the system upon which is was built.
 ```
-The executable will be added to a folder named 'dist' and will work on the system upon which is was built.
+pyinstaller --noconfirm --onefile --console --icon "img/backup_mgr.ico" --add-data "certifi;certifi"  "backup_mgr.py"
+pyinstaller --noconfirm --onefile --console --icon "img/backup_item.ico" --add-data "certifi;certifi"  "backup_item.py"
+pyinstaller --noconfirm --onefile --console --icon "img/backup_admin.ico" --add-data "certifi;certifi"  "backup_admin.py"
+pyinstaller --noconfirm --onefile --console --icon "img/backup_cfg_mgr.ico" --add-data "certifi;certifi"  "backup_cfg_mgr.py"
+```
 
-## TODO
-
- - Make backup_mgr multithreaded 
- - Make backup_mgr_gui multithreaded
- - Investigate adding in remote git support and management (i.e. )
- - Better logging throughout
+***NOTE:*** The resulting executables are not garanteed to work within an enteprise systems. 
 
 ## Authors
 
@@ -161,4 +174,4 @@ The executable will be added to a folder named 'dist' and will work on the syste
 
 ## Acknoledgements
 
-Inspired by the lack of a descent solution from ESRI  for backing up AGOL content and the work carried out by [SEMCOG](https://github.com/SEMCOG/Ago_Backup)
+Inspired by the lack of a descent solution from ESRI for backing up AGOL content and the work carried out by [SEMCOG](https://github.com/SEMCOG/Ago_Backup)
