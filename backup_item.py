@@ -49,12 +49,8 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
     # Process modification flag
     if skip_unmodified:
         # Get timestamp file
-        try:
-            with open(f"{item_dir}/lastupdate.ts", 'r') as f:
-                last_backedup = json.load(f)
-        except IOError:
-            # Default to the start of time if timestamp file does not exist
-            last_backedup = 0
+        last_backedup = util.get_ts(os.path.join(item_dir,"lastupdate.ts"))
+
         # Get last modified date
         if item["type"] == "Feature Service":
             # Check for max datestamp from feature service
@@ -69,6 +65,8 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
         else:
             # Check item against existing item
             last_modified = item['modified']
+        # Convert last modified to datetime for comparison 
+        last_modified = datetime.fromtimestamp(last_modified/1000)
         # Check if item has been modified
         if last_modified <= last_backedup:
             # Bypass as item has not been modified since last backup
@@ -79,7 +77,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
     # Backup status
     logger.debug(" Exporting:")
     # Write out timestamp file
-    util.export_obj(f"{item_dir}/lastupdate.ts", int(time.time() * 1000))
+    util.set_ts(os.path.join(item_dir,"lastupdate.ts"))
     # Check if requested
     if "item" in options or "all" in options:
         # Remove number of views as it changes each request and is always picked up in GIT change tracking

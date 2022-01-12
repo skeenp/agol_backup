@@ -148,4 +148,4 @@ def set_ts(file: str):
         file (str): destination timestamp file
     """
     # Write out timestamp file
-    export_obj(file, datetime.isoformat())
+    export_obj(file, datetime.now().isoformat())

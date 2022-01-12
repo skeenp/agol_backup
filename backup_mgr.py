@@ -146,7 +146,7 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
                         # Setup diff with a 2% margin
                         diff = item["hours_diff"] * 0.98
                         # Check if item is due based on last run and hours_diff
-                        last_run = util.get_ts(os.path.join(itmdir, 'lastupdate.ts'))
+                        last_run = util.get_ts(os.path.join(itmdir, itemid, 'lastupdate.ts'))
                         item_duedate = last_run + timedelta(hours=diff)
                         item_due = item_duedate < datetime.now()
                     else:
@@ -159,8 +159,6 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
                         # Update status if appropriate
                         if res.value > 1:
                             log.post(logger, f" > Skipped item, {res}")
-                        # Update last run
-                        util.set_ts(os.path.join(itmdir, 'lastupdate.ts'))
                     else:
                         log.post(logger, " > Skipped item, not yet due")
             except Exception:
