@@ -26,7 +26,7 @@ def setup(prefix: str, app_dir: str, active: bool = True, level=logging.INFO):
     # Setup logger
     logging.basicConfig(
         filename=path if active else os.devnull,
-        level=logging.INFO,
+        level=level,
         format="%(asctime)s %(levelname)s: %(message)s",
     )
     logger = logging.getLogger()
