@@ -3,6 +3,7 @@
 import os
 import shutil
 import json
+from datetime import datetime
 
 
 def setup_dir(item_dir: str):
@@ -121,3 +122,30 @@ def export_url(out_path: str, url: str):
     with open(out_path, "w") as f:
         # Dump data
         f.write(f"[InternetShortcut]\nURL={url}")
+
+
+def get_ts(file: str):
+    """Gets standardised timestamp file
+
+    Args:
+        file (str): source timestamp file
+    """
+    # Get last change date
+    try:
+        # Load timestamp file
+        with open(file, 'r') as f:
+            ts = datetime.fromisoformat(json.load(f))
+    except IOError:
+        # Default to the start of time if timestamp file does not exist
+        ts = datetime.min
+    return ts
+
+
+def set_ts(file: str):
+    """Sets standardised timestamp file
+
+    Args:
+        file (str): destination timestamp file
+    """
+    # Write out timestamp file
+    export_obj(file, datetime.isoformat())

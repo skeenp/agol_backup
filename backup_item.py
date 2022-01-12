@@ -41,7 +41,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
     # Check if item exists
     if not item:
         # Update status
-        logger.info("  > Item not found")
+        logger.info(" > Item not found")
         # End module
         return Response.ItemNotFound
     # Setup item dir
@@ -65,19 +65,19 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
                     in item.layers + item.tables
                 )
             except ValueError:
-                last_modified = sys.maxint
+                last_modified = sys.maxsize
         else:
             # Check item against existing item
             last_modified = item['modified']
         # Check if item has been modified
         if last_modified <= last_backedup:
             # Bypass as item has not been modified since last backup
-            logger.info("  > Item not modified")
+            logger.info(" > Item not modified")
             return Response.ItemNotModified
     # Clear our old and setup new dir
     util.setup_dir(item_dir)
     # Backup status
-    logger.debug("  Exporting:")
+    logger.debug(" Exporting:")
     # Write out timestamp file
     util.export_obj(f"{item_dir}/lastupdate.ts", int(time.time() * 1000))
     # Check if requested
@@ -85,56 +85,56 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
         # Remove number of views as it changes each request and is always picked up in GIT change tracking
         del item["numViews"]
         # Update status
-        logger.debug("  > Item")
+        logger.debug(" > Item")
         # Backup item
         util.export_agolclass(f"{item_dir}/content.json", item)
     # Check if requested
     if "data" in options or "all" in options:
         # Update status
-        logger.debug("  > Data")
+        logger.debug(" > Data")
         # Backup meta
         item.download(item_dir)
     # Check if requested
     if "metadata" in options or "all" in options:
         # Update status
-        logger.debug("  > Metadata")
+        logger.debug(" > Metadata")
         # Backup meta, if it exists
         if "Metadata" in item["typeKeywords"]:
             item.download_metadata(item_dir)
     # Check if requested
     if "thumbnail" in options or "all" in options:
         # Update status
-        logger.debug("  > Thumbnail")
+        logger.debug(" > Thumbnail")
         # Backup meta
         item.download_thumbnail(os.path.join(item_dir, "thumbnail"))
     # Check if requested
     if "url" in options or "all" in options:
         # Update status
-        logger.debug("  > URL")
+        logger.debug(" > URL")
         # Backup url file
         util.export_url(f"{item_dir}/item.url", item.homepage)
     # Check if requested
     if "sharing" in options or "all" in options:
         # Update status
-        logger.debug("  > Sharing")
+        logger.debug(" > Sharing")
         # Backup sharing
         util.export_obj(f"{item_dir}/sharing.json", item.shared_with)
     # Check if requested
     if "comments" in options or "all" in options:
         # Update status
-        logger.debug("  > Comments")
+        logger.debug(" > Comments")
         # Backup comments
         util.export_agolclass_list(f"{item_dir}/comments.json", item.comments)
     # Check if requested
     if "appinfo" in options or "all" in options:
         # Update status
-        logger.debug("  > App Info")
+        logger.debug(" > App Info")
         # Backup appinfo
         util.export_obj(f"{item_dir}/appinfo.json", item.app_info)
     # Check if requested
     if "related" in options or "all" in options:
         # Update status
-        logger.debug("  > Related Items")
+        logger.debug(" > Related Items")
         # Backup related items
         related_items = {}
         reltypes = [
@@ -181,7 +181,7 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
         # Check type is compatible
         if item["type"] in ["Feature Service", "Vector Tile Service", "Scene Service"]:
             # Update Status
-            logger.debug("  > Service")
+            logger.debug(" > Service")
             # Setup title
             postfix = "_tmpbackup"
             title = f"{item['title']}{postfix}"
@@ -194,8 +194,8 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
                 # Delete export
                 export.delete()
             except Exception:
-                logger.exception("  > Service Export Failed")
-            return Response.ExportNotSupported
+                logger.exception(" > Service Export Failed")
+                return Response.ExportNotSupported
     # Return success
     return Response.Success
 
@@ -242,8 +242,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s",
         action="store_true",
-        dest="skipmodified",
-        help="Skip modified items (works when backing up to the same location as last time)",
+        dest="skipunmodified",
+        help="Skip unmodified items (works when backing up to the same location as last time)",
     )
     parser.add_argument(
         "-v",
@@ -276,7 +276,7 @@ if __name__ == "__main__":
             # Update status
             log.post(logger, f" - Collecting Item {args.itemid}")
             # Run script with args
-            res = run(ago.gis, itemid=args.itemid, directory=args.outputdir, fmt=args.format, options=args.options, skip_unmodified=args.skipmodified, logger=logger)
+            res = run(ago.gis, itemid=args.itemid, directory=args.outputdir, fmt=args.format, options=args.options, skip_unmodified=args.skipunmodified, logger=logger)
             # Update status
             log.post(logger, f" - {res}")
     except Exception:

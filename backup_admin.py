@@ -22,12 +22,10 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
     directory = os.path.join(directory, "admin")
     if not os.path.exists(directory):
         os.makedirs(directory)
-    # Update status
-    logger.debug("  Exporting:")
     # Determine if groups are to exported
     if "groups" in components or "all" in components:
         # Update status
-        logger.debug("  > Groups")
+        logger.debug(" > Groups")
         # Setup groups folder
         group_dir = os.path.join(directory, "groups")
         if not os.path.exists(group_dir):
@@ -41,19 +39,19 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
             # Get group if requested
             if "item" in options or "all" in options:
                 # Update status
-                logger.debug("  > Group Info")
+                logger.debug(" > Group Info")
                 grp_path = f"{grp_dir}/group.json"
                 util.export_agolclass(grp_path, group)
             # Get group members if requested
             if "members" in options or "all" in options:
                 # Update status
-                logger.debug("  > Members")
+                logger.debug(" > Members")
                 grp_members = f"{grp_dir}/members.json"
                 util.export_obj(grp_members, group.get_members())
             # Get content if requested
             if "items" in options or "all" in options:
                 # Update status
-                logger.debug("  > Items")
+                logger.debug(" > Items")
                 grp_items = f"{grp_dir}/items.json"
                 # Setup items var
                 items = []
@@ -65,17 +63,17 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
             # Get URL if requested
             if "url" in options or "all" in options:
                 # Update status
-                logger.debug("  > URL")
+                logger.debug(" > URL")
                 util.export_url(f"{grp_dir}/group.url", group.homepage)
             # Get thumbnail if requested
             if "thumbnail" in options or "all" in options:
                 # Update status
-                logger.debug("  > Thumbnail")
+                logger.debug(" > Thumbnail")
                 group.download_thumbnail(grp_dir)
     # Determine if users are to exported
     if "users" in components or "all" in components:
         # Update status
-        logger.debug("  > Users")
+        logger.debug(" > Users")
         # Setup groups folder
         users_dir = os.path.join(directory, "users")
         if not os.path.exists(users_dir):
@@ -89,25 +87,25 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
             # Update user groups if requested
             if "item" in options or "all" in options:
                 # Update status
-                logger.debug("  > User Info")
+                logger.debug(" > User Info")
                 usr_path = f"{usr_dir}/user.json"
                 # Export data
                 util.export_agolclass(usr_path, user)
             # Save URL if requested
             if "url" in options or "all" in options:
                 # Update status
-                logger.debug("  > URL")
+                logger.debug(" > URL")
                 usr_url = f"{usr_dir}/user.url"
                 util.export_url(usr_url, user.homepage)
             # Get thumbnail if requested
             if "thumbnail" in options or "all" in options:
                 # Update status
-                logger.debug("  > Thumbnail")
+                logger.debug(" > Thumbnail")
                 user.download_thumbnail(usr_dir)
     # Determine if self are to exported
     if "me" in components or "all" in components:
         # Update status
-        logger.debug("  > Me")
+        logger.debug(" > Me")
         # Setup groups folder
         me_dir = os.path.join(directory, "me")
         if not os.path.exists(me_dir):
@@ -121,38 +119,38 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
         # Update user if requested
         if "item" in options or "all" in options:
             # Update status
-            logger.debug("  > User Info")
+            logger.debug(" > User Info")
             usr_path = f"{usr_dir}/user.json"
             # Export data
             util.export_agolclass(usr_path, user)
         # Get groups if requested
         if "groups" in options or "all" in options:
             # Update status
-            logger.debug("  > Groups")
+            logger.debug(" > Groups")
             usr_grps = f"{usr_dir}/groups.json"
             util.export_agolclass_list(usr_grps, user.groups)
         # Get user types if requested
         if "usrtypes" in options or "all" in options:
             # Update status
-            logger.debug("  > User Types")
+            logger.debug(" > User Types")
             usrtyp_path = f"{usr_dir}/usertypes.json"
             util.export_agolclass(usrtyp_path, user.user_types)
         # Get folders if requested
         if "folders" in options or "all" in options:
             # Update status
-            logger.debug("  > Folders")
+            logger.debug(" > Folders")
             usr_folders = f"{usr_dir}/folders.json"
             util.export_obj(usr_folders, user.folders)
         # Get linked accounts if requested
         if "linked" in options or "all" in options:
             # Update status
-            logger.debug("  > Linked Accounts")
+            logger.debug(" > Linked Accounts")
             usr_linkedacc = f"{usr_dir}/linked_accounts.json"
             util.export_agolclass_list(usr_linkedacc, user.linked_accounts)
         # Get content if requested
         if "items" in options or "all" in options:
             # Update status
-            logger.debug("  > Items")
+            logger.debug(" > Items")
             usr_cnt = f"{usr_dir}/items.json"
             # Setup items var
             items = []
@@ -164,14 +162,16 @@ def run(gis: GIS, directory: str, components: list, options: list, logger: loggi
         # Save URL if requested
         if "url" in options or "all" in options:
             # Update status
-            logger.debug("  > URL")
+            logger.debug(" > URL")
             usr_url = f"{usr_dir}/me.url"
             util.export_url(usr_url, user.homepage)
         # Get thumbnail if requested
         if "thumbnail" in options or "all" in options:
             # Update status
-            logger.debug("  > Thumbnail")
+            logger.debug(" > Thumbnail")
             user.download_thumbnail(usr_dir)
+    # Write timestamp
+    util.set_ts(os.path.join(directory, 'lastupdate.ts'))
 
 
 if __name__ == "__main__":
@@ -241,9 +241,9 @@ if __name__ == "__main__":
         # Get arcgis online connection object
         ago = agol.Agol(args.portal, args.username, args.password, logger)
         # Update status
-        log.post(logger, " - Collecting Admin Items")
+        log.post(logger, "- Collecting Admin Items")
         # Run with args
-        run(ago.gis, args.outputdir, args.components, args.options, logger)
+        run(ago.gis, directory=args.outputdir, components=args.components, options=args.options, logger=logger)
     except Exception:
         # Catch everything else
         log.post(logger, "Script failed unexpectedly", logging.ERROR)

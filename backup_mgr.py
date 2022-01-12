@@ -19,12 +19,13 @@ import backup_item
 os.environ['REQUESTS_CA_BUNDLE'] = "certifi/cacert.pem"
 
 
-def run(cfg_paths: list, logger: logging):
+def run(cfg_paths: list, logger: logging, reset: bool = False):
     """Module to manage backups as defined in a backup config file
 
     Args:
         cfg_paths (str): List of paths to config files to process
         logger (logging): logging object to pass to tool for logging purposes
+        reset (bool): Ignores timestamps and resets download timing logic (Default false)
     """
     # Parse config files
     for cfg in cfg_paths:
@@ -41,7 +42,7 @@ def run(cfg_paths: list, logger: logging):
         # Setup backup folder
         backup_dir = os.path.join(cfg["outdir"], cfg["label"])
         if not os.path.exists(backup_dir):
-            os.mkdirs(backup_dir)
+            os.makedirs(backup_dir)
         # Default git var
         usegit = cfg['usegit'] if 'usegit' in cfg else True
         # Setup git if requested
@@ -78,32 +79,36 @@ def run(cfg_paths: list, logger: logging):
                     components = admin["components"]
                 else:
                     components = 'all'
-                # Get last change date
-                last_run = datetime.fromisoformat(admin["last"]) if 'last' in admin else 0
                 # Check for due date
-                if not os.path.exists(backup_dir):
+                if reset:
+                    admin_due = True
+                elif not os.path.exists(backup_dir):
                     # If item folder does mark as due
-                    item_due = True
+                    admin_due = True
+                elif admin["hours_diff"] == 0.0:
+                    # If item is set at 0, skip
+                    log.post(logger, " > Skipped admin, item set to ignore (hours_diff=0.0)")
+                    admin_due = False
                 elif admin["hours_diff"] > 0.0:
                     # Setup diff with a 2% margin
                     diff = admin * 0.98
+                    # Get last run date
+                    last_run = datetime.fromisoformat(admin["last"]) if 'last' in admin else 0
                     # Check if item is due based on last run and hours_diff
-                    item_duedate = last_run + timedelta(hours=diff)
-                    item_due = item_duedate < datetime.now()
+                    admin_duedate = last_run + timedelta(hours=diff)
+                    admin_due = admin_duedate < datetime.now()
                 else:
-                    item_due = True
-                # Continue to next item if not due
-                if item_due:
+                    # Default to due
+                    admin_due = True
+                # Check if due
+                if admin_due:
                     # Backup admin item
                     backup_admin.run(ago.gis, backup_dir, components, options, logger)
-                    # Update last backup time
-                    admin["last"] = datetime.now().isoformat()
-                elif admin["hours_diff"] == 0.0:
-                    # Update status
-                    log.post(logger, "  > Skipped, item set to ignore (hours_diff=0.0)")
+                    log.post(logger, " > Admin successfully backed up")
                 else:
                     # Update status
-                    log.post(logger, "  > Skipped, not due it")
+                    log.post(logger, " > Skipped admin, not due yet")
+            # Process items
             try:
                 # Update status
                 log.post(logger, "Processing Items")
@@ -114,33 +119,6 @@ def run(cfg_paths: list, logger: logging):
                     log.post(logger, f" - {itemid}")
                     # Check if backup is not yet due
                     itmdir = os.path.join(backup_dir, "items")
-                    # Get last change date
-                    try:
-                        # Load timestamp file
-                        with open(f"{itmdir}/lastupdate.ts", 'r') as f:
-                            last_run = datetime.fromisoformat(json.load(f))
-                    except IOError:
-                        # Default to the start of time if timestamp file does not exist
-                        last_run = 0
-                    # Check for due date
-                    if not os.path.exists(itmdir):
-                        # If item folder does mark as due
-                        item_due = True
-                    elif item["hours_diff"] > 0.0:
-                        # Setup diff with a 2% margin
-                        diff = item["hours_diff"] * 0.98
-                        # Check if item is due based on last run and hours_diff
-                        item_duedate = last_run + timedelta(hours=diff)
-                        item_due = item_duedate < datetime.now()
-                    else:
-                        item_due = True
-                    # Continue to next item if not due
-                    if not item_due:
-                        log.post(logger, "  > Skipped, not yet due")
-                        continue
-                    if item["hours_diff"] == 0.0:
-                        log.post(logger, "  > Skipped, item set to ignore (hours_diff=0.0)")
-                        continue
                     # Get format
                     if "format" in item:
                         fmt = item["format"]
@@ -151,21 +129,43 @@ def run(cfg_paths: list, logger: logging):
                         options = item["options"]
                     else:
                         options = 'all'
-                    # Run backup for item
-                    res = backup_item.run(ago.gis, itemid, backup_dir, options, fmt, skip_unmodified=True, logger=logger)
-                    # Update status if appropriate
-                    if res.value > 1:
-                        log.post(logger, f"  > Skipped, {res}")
-                    # Reset hours_diff if once requested
-                    if item["hours_diff"] == -1.0:
-                        item["hours_diff"] == 0.0
+                    # Check for due date
+                    if reset:
+                        admin_due = True
+                    elif not os.path.exists(itmdir):
+                        # If item folder does mark as due
+                        item_due = True
+                    elif item["hours_diff"] == 0.0:
+                        # If item is set at 0, skip
+                        log.post(logger, " > Skipped item, item set to ignore (hours_diff=0.0)")
+                        admin_due = False
+                    elif item["hours_diff"] > 0.0:
+                        # Setup diff with a 2% margin
+                        diff = item["hours_diff"] * 0.98
+                        # Check if item is due based on last run and hours_diff
+                        last_run = util.get_ts(os.path.join(itmdir, 'lastupdate.ts'))
+                        item_duedate = last_run + timedelta(hours=diff)
+                        item_due = item_duedate < datetime.now()
+                    else:
+                        item_due = True
+                    # Continue to next item if not due
+                    if item_due:
+                        # Run backup for item
+                        skipunmod = False if reset else True
+                        res = backup_item.run(ago.gis, itemid, backup_dir, options, fmt, skip_unmodified=skipunmod, logger=logger)
+                        # Update status if appropriate
+                        if res.value > 1:
+                            log.post(logger, f" > Skipped item, {res}")
+                        # Reset hours_diff if once requested
+                        if item["hours_diff"] == -1.0:
+                            item["hours_diff"] == 0.0
+                        # Update last run
+                        util.set_ts(os.path.join(itmdir, 'lastupdate.ts'))
+                    else:
+                        log.post(logger, " > Skipped item, not yet due")
             except Exception:
                 # Report error and continue
                 logger.exception('Unexpected error occured backing up files, please review code and try again.')
-        # Setup last timestamp for config
-        cfg["last"] = datetime.now().isoformat()
-        # Update config items
-        util.export_obj(cfg_path, cfg)
         # Commit changes to git repo
         if usegit:
             # Add all files and committ
@@ -184,6 +184,12 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', dest='config', help="Config item defining items to backup", nargs='+')
     parser.add_argument("-v", action="store_true", dest="verbose", help="Verbose, also logs debug messages")
     parser.add_argument(
+        "-r",
+        action="store_true",
+        dest="reset",
+        help="Reset items by ignoring timestamps",
+    )
+    parser.add_argument(
         "-q",
         action="store_false",
         dest="nolog",
@@ -193,7 +199,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # Setup logger
     log_level = logging.DEBUG if args.verbose else logging.INFO
-    logger = log.setup("backup_mgr", app_dir=app_dir, active=args.nolog)
+    logger = log.setup("backup_mgr", app_dir=app_dir, active=args.nolog, level=log_level)
     # Update script log
     tsstart = datetime.now()
     tsstart_str = tsstart.strftime("%m/%d/%Y %H:%M:%S")
@@ -204,7 +210,7 @@ if __name__ == '__main__':
     logger.debug(msg)
     try:
         # Run script with args
-        run(cfg_paths=args.config, logger=logger)
+        run(cfg_paths=args.config, logger=logger, reset=args.reset)
     except Exception:
         # Catch everything else
         log.post(logger, "Script failed unexpectedly", logging.ERROR)
