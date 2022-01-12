@@ -32,6 +32,9 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
         # Get config path
         cfg_path = os.path.abspath(cfg)
         log.post(logger, f"Using config file at {cfg_path}")
+        # Check config file exists
+        if not os.path.exists(cfg_path):
+            log.post(logger, " - Config file not found")
         # Process config items
         with open(cfg_path, "r") as f:
             cfg = json.load(f)
@@ -214,7 +217,7 @@ if __name__ == '__main__':
     except Exception:
         # Catch everything else
         log.post(logger, "Script failed unexpectedly", logging.ERROR)
-        logger.exception()
+        logger.exception('Script Failed')
     finally:
         # Update log
         tsend = datetime.now()
