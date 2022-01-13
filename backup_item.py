@@ -185,15 +185,19 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
             title = f"{item['title']}{postfix}"
             try:
                 # Setup export
-                export = item.export(title=title, export_format=fmt, wait=True, overwrite=True)
+                export = item.export(title=title, export_format=fmt, wait=True, overwrite=True, tags="Backup")
                 # Grab data
                 file_data = export.download(item_dir)
                 os.rename(file_data, file_data.replace(postfix, ''))
-                # Delete export
-                export.delete()
             except Exception:
                 logger.exception(" > Service Export Failed")
                 return Response.ExportNotSupported
+            finally:
+                # Try to delete export
+                try:
+                    export.delete()
+                except Exception:
+                    pass
     # Return success
     return Response.Success
 
