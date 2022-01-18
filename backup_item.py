@@ -50,7 +50,6 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
     if skip_unmodified:
         # Get timestamp file
         last_backedup = util.get_ts(os.path.join(item_dir,"lastupdate.ts"))
-
         # Get last modified date
         if item["type"] == "Feature Service":
             # Check for max datestamp from feature service
@@ -76,8 +75,6 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
     util.setup_dir(item_dir)
     # Backup status
     logger.debug(" Exporting:")
-    # Write out timestamp file
-    util.set_ts(os.path.join(item_dir,"lastupdate.ts"))
     # Check if requested
     if "item" in options or "all" in options:
         # Remove number of views as it changes each request and is always picked up in GIT change tracking
@@ -91,13 +88,15 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
         # Update status
         logger.debug(" > Data")
         # Backup meta
-        item.download(item_dir)
+        data = item.download(item_dir)
+        os.rename(data,f"{data}.data")
     # Check if requested
     if "metadata" in options or "all" in options:
         # Update status
         logger.debug(" > Metadata")
         # Backup meta, if it exists
         if "Metadata" in item["typeKeywords"]:
+            # Export metadata
             item.download_metadata(item_dir)
     # Check if requested
     if "thumbnail" in options or "all" in options:
@@ -121,27 +120,29 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
     if "comments" in options or "all" in options:
         # Update status
         logger.debug(" > Comments")
+        # Get comments
+        comments = item.comments
         # Backup comments
-        util.export_agolclass_list(f"{item_dir}/comments.json", item.comments)
+        if comments:
+            util.export_agolclass_list(f"{item_dir}/comments.json", comments)
     # Check if requested
     if "appinfo" in options or "all" in options:
         # Update status
         logger.debug(" > App Info")
+        # Get app info
+        appinfo = item.app_info
         # Backup appinfo
-        util.export_obj(f"{item_dir}/appinfo.json", item.app_info)
+        if appinfo:
+            util.export_obj(f"{item_dir}/appinfo.json", appinfo)
     # Check if requested
     if "resources" in options or "all" in options:
         # Update status
         logger.debug(" > Resources")
-        # Make resources dir
-        res_dir = f"{item_dir}/resources"
-        if not os.path.exists(res_dir):
-            os.makedirs(res_dir)
         # Backup resources
         res = item.resources
-        for r in res.list():
-            res.get(r['resource'], out_folder=res_dir)
-        util.export_obj(f"{item_dir}/appinfo.json", item.app_info)
+        if res.list():
+            #Export resources
+            res.export(item_dir, 'resources.zip')
     # Check if requested
     if "related" in options or "all" in options:
         # Update status
@@ -211,6 +212,8 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
                     export.delete()
                 except Exception:
                     pass
+    # Write out timestamp file
+    util.set_ts(os.path.join(item_dir,"lastupdate.ts"))
     # Return success
     return Response.Success
 
