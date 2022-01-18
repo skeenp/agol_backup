@@ -14,12 +14,10 @@ This project provides scripts and a windows exe which allows you to easily manag
   - [Use](#use)
     - [Setup & Scheduling](#setup--scheduling)
     - [Accessing Backups](#accessing-backups)
-    - [Python Scripts](#python-scripts)
-      - [backup_cfg_mgr.py](#backup_cfg_mgrpy)
-      - [backup_mgr.py](#backup_mgrpy)
-      - [backup_item.py](#backup_itempy)
-      - [backup_admin.py](#backup_adminpy)
-    - [Executable](#executable)
+    - [backup_cfg_mgr.py](#backup_cfg_mgrpy)
+    - [backup_mgr.py](#backup_mgrpy)
+    - [backup_item.py](#backup_itempy)
+    - [backup_admin.py](#backup_adminpy)
   - [Building Standalong App](#building-standalong-app)
   - [Authors](#authors)
   - [Acknoledgements](#acknoledgements)
@@ -75,11 +73,7 @@ To setup an environment for scheduled backups, first build a config file using b
 
 Backups are committed to either a local folder or a managed local git repo. If git is enabled, using your preferred git client i.e. [Github Desktop](https://desktop.github.com/), you can access previous versions and updates to data. The script does not manage git folder size, so you will want to keep an eye on the size of your repo and perhaps clean it up periodically to flush old backups.
 
-### Python Scripts
-
-There are four main python scripts available in the project, as outlined below.
-
-#### backup_cfg_mgr.py
+### backup_cfg_mgr.py
 
 This tool manages backs up and ArcGIS Online item to a local folder including definitions, data and features in the requested format
 
@@ -96,7 +90,7 @@ optional arguments:
 
 ***NOTE:*** The GUI works, but is slow. It may appear to be locked up whilst connecting to an AGOL/Portal instance with a significant number of items. Patience is a virtue.
 
-#### backup_mgr.py
+### backup_mgr.py
 This tool manages backs up and ArcGIS Online item to a local folder including definitions, data and features in the requested format
 ```
 optional arguments:
@@ -108,7 +102,7 @@ optional arguments:
   -q                    Do not log script progress to file
 ```
 
-#### backup_item.py
+### backup_item.py
 This tool backs up and ArcGIS Online item to a local folder including its definition, data and features in the requested fmt
 ```
 positional arguments:
@@ -122,14 +116,16 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -o {item,data,metadata,thumbnail,url,sharing,appinfo,related,service,all} [{item,data,metadata,thumbnail,url,sharing,appinfo,related,service,all} ...], --options {item,data,metadata,thumbnail,url,sharing,appinfo,related,service,all} [{item,data,metadata,thumbnail,url,sharing,appinfo,related,service,all} ...]
+  -o {item,data,metadata,thumbnail,url,sharing,appinfo,related,service,resources,comments,all} [{item,data,metadata,thumbnail,url,sharing,appinfo,related,service,resources,comments,all} ...]
                         Options for export
   -s                    Skip unmodified items (works when backing up to the same location as last time)
   -v                    Verbose, also logs debug messages
   -q                    Do not log script progress to file
 ```
 
-#### backup_admin.py
+See [Backup Items Options](backup_items_options.md) for more detail on export options.
+
+### backup_admin.py
 
 This tool backs up and ArcGIS Online admin item to a JSON file
 
@@ -149,11 +145,6 @@ optional arguments:
   -v                    Verbose, also logs debug messages
   -q                    Do not log script progress to file
 ```
-
-### Executable
-
-The execuatables mirror the definition of scripts above.
-
 
 ## Building Standalong App
 

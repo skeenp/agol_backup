@@ -132,6 +132,19 @@ def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unm
         # Backup appinfo
         util.export_obj(f"{item_dir}/appinfo.json", item.app_info)
     # Check if requested
+    if "resources" in options or "all" in options:
+        # Update status
+        logger.debug(" > Resources")
+        # Make resources dir
+        res_dir = f"{item_dir}/resources"
+        if not os.path.exists(res_dir):
+            os.makedirs(res_dir)
+        # Backup resources
+        res = item.resources
+        for r in res.list():
+            res.get(r['resource'], out_folder=res_dir)
+        util.export_obj(f"{item_dir}/appinfo.json", item.app_info)
+    # Check if requested
     if "related" in options or "all" in options:
         # Update status
         logger.debug(" > Related Items")
@@ -233,6 +246,8 @@ if __name__ == "__main__":
             "appinfo",
             "related",
             "service",
+            "comments",
+            "resources",
             "all",
         ],
         default="all",
