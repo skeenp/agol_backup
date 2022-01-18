@@ -30,7 +30,6 @@ class BackupMgrGUI:
     """AGOL Backup Manager GUI
     """
     _cfg = CONFIG_BLANK
-    _cfgpath = ""
     _items = {}
     _ago = None
 
@@ -65,6 +64,7 @@ class BackupMgrGUI:
         self._label = tk.StringVar()
         self._location = tk.StringVar(value='Not set')
         self._outdir = tk.StringVar()
+        self._cfgpath = tk.StringVar()
         self._pword = tk.StringVar()
         self._uname = tk.StringVar()
         self._portal = tk.StringVar()
@@ -250,7 +250,7 @@ class BackupMgrGUI:
         """
         # Wipe config
         self._cfg = CONFIG_BLANK
-        self._cfgpath = None
+        self._cfgpath.set(None)
         self._location.set('Not set')
         # Update title
         self._update_title('')
@@ -261,7 +261,7 @@ class BackupMgrGUI:
         """Update form title with config path (if supplied)
         """
         # Update title
-        if self._cfgpath:
+        if info:
             self._gui.wm_title(f"{TITLE} ({info})")
         else:
             self._gui.wm_title(TITLE)
@@ -281,21 +281,22 @@ class BackupMgrGUI:
         except json.decoder.JSONDecodeError as err:
             messagebox.showerror(
                 "Load Failed", f"Config file is not formatted correctly.\n{str(err)}")
-            self._cfgpath = None
+            self._cfgpath.set(None)
             return
         except IOError as err:
             messagebox.showerror(
                 "Load Failed", f"Load was not successful.\n{str(err)}")
-            self._cfgpath = None
+            self._cfgpath.set(None)
             return
         # Update loaded path
-        self._cfgpath = path
+        self._cfgpath.set(path)
         # Update config path
         self._location.set(path)
         # Update form
         self._load()
         # Update page title
-        self._update_title(os.path.basename(self._cfgpath))
+        msg = os.path.basename(self._cfgpath.get())
+        self._update_title(msg)
 
     def config_load(self, e=None):
         """Prompt for a path to load config file from
@@ -369,7 +370,8 @@ class BackupMgrGUI:
             # Save object
             util.export_obj(path, self._cfg)
             # Update page title
-            self._update_title(os.path.basename(self._cfgpath))
+            msg = os.path.basename(self._cfgpath.get())
+            self._update_title(msg)
         except IOError as err:
             # Display save failed error
             messagebox.showerror(
@@ -390,7 +392,7 @@ class BackupMgrGUI:
         if p:
             self._config_save(p)
             # Update path variable
-            self._cfgpath = p
+            self._cfgpath.set(p)
 
     def config_save(self, e=None):
         """Saves config or if path not available, prompt for a path to save config file to
@@ -399,12 +401,12 @@ class BackupMgrGUI:
             e ([type], optional): Event info, not used. Defaults to None.
         """
         # Check path has been set
-        if not self._cfgpath:
+        if not self._cfgpath.get():
             # If no path, use saveas
             self.config_saveas()
         else:
             # Save is path exists
-            self._config_save(self._cfgpath)
+            self._config_save(self._cfgpath.get())
 
     def _agol_connect(self, init: bool = False):
         """Connects to AGOL or Portal instance
