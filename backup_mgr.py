@@ -8,12 +8,12 @@ import logging
 import log
 import util
 import agol
-import backup_admin
-import backup_item
+import backup_admin as ba
+import backup_items as bi
 
 # TODO: Multithreading on item download
 
-"""Script to leverage the functionality of backup_admin and backup_item to manage a series of backups for an AGOL account"""
+"""Script to leverage the functionality of backup_admin and backup_items to manage a series of backups for an AGOL account"""
 
 # Run cert override
 os.environ['REQUESTS_CA_BUNDLE'] = "certifi/cacert.pem"
@@ -78,10 +78,10 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
                 else:
                     options = 'all'
                 # Get options
-                if 'components' in admin:
-                    components = admin["components"]
+                if 'component' in admin:
+                    component = admin["component"]
                 else:
-                    components = 'all'
+                    component = None
                 # Check for due date
                 if reset:
                     admin_due = True
@@ -94,9 +94,10 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
                     admin_due = False
                 elif admin["hours_diff"] > 0.0:
                     # Setup diff with a 2% margin
-                    diff = admin * 0.98
+                    diff = admin["hours_diff"] * 0.98
                     # Get last run date
-                    last_run = datetime.fromisoformat(admin["last"]) if 'last' in admin else 0
+                    last_ts = admin["last"] if 'last' in admin else '2000-01-01'
+                    last_run = datetime.fromisoformat(last_ts)
                     # Check if item is due based on last run and hours_diff
                     admin_duedate = last_run + timedelta(hours=diff)
                     admin_due = admin_duedate < datetime.now()
@@ -106,7 +107,13 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
                 # Check if due
                 if admin_due:
                     # Backup admin item
-                    backup_admin.run(ago.gis, backup_dir, components, options, logger)
+                    # TODO Depreciate component = all
+                    if 'users' in component or 'all' in component:
+                        ba.backup_users(ago.gis, backup_dir, options, logger)
+                    if 'groups' in component or 'all' in component:
+                        ba.backup_groups(ago.gis, backup_dir, options, logger)
+                    if 'self' in component or 'all' in component:
+                        ba.backup_self(ago.gis, backup_dir, options, logger)
                     log.post(logger, " > Admin successfully backed up")
                 else:
                     # Update status
@@ -155,7 +162,7 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
                     if item_due:
                         # Run backup for item
                         skipunmod = False if reset else True
-                        res = backup_item.run(ago.gis, itemid, backup_dir, options, fmt, skip_unmodified=skipunmod, logger=logger)
+                        res = bi.backup(ago.gis, itemid, backup_dir, options, fmt, skip_unmodified=skipunmod, logger=logger)
                         # Update status if appropriate
                         if res.value > 1:
                             log.post(logger, f" > Skipped item, {res}")

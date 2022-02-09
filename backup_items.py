@@ -21,7 +21,7 @@ class Response(Enum):
     ExportNotSupported = 4
 
 
-def run(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unmodified: bool, logger: logging):
+def backup(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_unmodified: bool, logger: logging):
     """Module to grab an item and its associated resources from ArcGIS Online and to save them to disk
 
     Args:
@@ -296,7 +296,7 @@ if __name__ == "__main__":
             # Update status
             log.post(logger, f" - Collecting Item {args.itemid}")
             # Run script with args
-            res = run(ago.gis, itemid=args.itemid, directory=args.outputdir, fmt=args.format, options=args.options, skip_unmodified=args.skipunmodified, logger=logger)
+            res = backup(ago.gis, itemid=args.itemid, directory=args.outputdir, fmt=args.format, options=args.options, skip_unmodified=args.skipunmodified, logger=logger)
             # Update status
             log.post(logger, f" - {res}")
     except Exception:

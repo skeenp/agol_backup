@@ -17,12 +17,12 @@ import pathlib
 
 # TODO: Multithreading on item load
 # TODO: Filtering
-# TODO: Remove packages offline packages from Field Maps
+# TODO: Remove/cleanup packages from AGOL
 
 PROJECT_PATH = pathlib.Path(__file__).parent
 CONFIG_PATH = f"{PROJECT_PATH}/config"
 TITLE = "Backup Manager GUI"
-CONFIG_BLANK = {"label": "Unnamed", "outdir": '', "portal": "", "pword": "", "uname": "", "admin": {"hours_diff": 168.0, "components": ['all'], "options": ["all"]}, "items": {}}
+CONFIG_BLANK = {"label": "Unnamed", "outdir": '', "portal": "", "pword": "", "uname": "", "admin": {"hours_diff": 168.0, "component": ['all'], "options": ["all"]}, "items": {}}
 FREQUENCY_OPTIONS = {'Ignore': 0.0, 'Hourly': 1.0, 'Daily': 24.0, 'Weekly': 168.0, 'Fortnightly': 336.0, 'Montly': 730.0, 'Quarterly': 2190.0, 'Yearly': 8760.0, 'Custom': None}
 
 
@@ -327,15 +327,15 @@ class BackupMgrGUI:
         if self._exportadmin.get():
             # Update admin
             admin = {}
-            # Update admin components
+            # Update admin component
             comp = []
             if self._exportme.get():
-                comp.append('me')
+                comp.append('self')
             if self._exportusers.get():
                 comp.append('users')
             if self._exportgroups.get():
                 comp.append('groups')
-            admin['components'] = comp
+            admin['component'] = comp
             # Update admin options
             admin['options'] = self._adminoptions.get().split(',')
             # Update admin hours
@@ -504,8 +504,8 @@ class BackupMgrGUI:
             self._exportadmin.set(not self._cfg['admin'] is None)
         # Load admin items
         if self._cfg['admin']:
-            # Get admin components and options
-            comps = self._cfg['admin']['components']
+            # Get admin component and options
+            comps = self._cfg['admin']['component']
             # Update admin options
             self._exportme.set('me' in comps or 'all' in comps)
             self._exportusers.set('users' in comps or 'all' in comps)
