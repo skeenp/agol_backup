@@ -92,6 +92,8 @@ optional arguments:
 
 **_NOTE:_** The GUI works, but is slow. It may appear to be locked up whilst connecting to an AGOL/Portal instance with a significant number of items. Patience is a virtue.
 
+**_ANOTHER NOTE:_** Config files are stored with passwords as plain text. You should store config files in your profile and not share them with others. Encryption may become a feature of this script but it is not within its current scope.
+
 ### backup_mgr.py
 
 This tool manages backs up and ArcGIS Online item to a local folder including definitions, data and features in the requested format

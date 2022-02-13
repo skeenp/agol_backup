@@ -48,7 +48,7 @@ class BackupMgrGUI:
         self._gui.wm_title("Backup Manager GUI")
         self._gui.columnconfigure(0, weight=1)
         self._gui.columnconfigure(1, weight=1)
-        self._gui.rowconfigure(8, weight=1)
+        self._gui.rowconfigure(7, weight=1)
         # Capture logger
         self._logger = logger
         # Setup vars
@@ -66,6 +66,7 @@ class BackupMgrGUI:
         self._outdir = tk.StringVar()
         self._cfgpath = tk.StringVar()
         self._pword = tk.StringVar()
+        self._filter = tk.StringVar()
         self._uname = tk.StringVar()
         self._portal = tk.StringVar()
         self._usegit = tk.BooleanVar(value=True)
@@ -171,7 +172,7 @@ class BackupMgrGUI:
         self._exportadmin.trace("w", self._toggleadmin)
         # Setup admin frame
         self.frame_admin = tk.Frame(self._gui)
-        self.frame_admin.grid(column=0, row=5, padx=2, pady=2, sticky='ew')
+        self.frame_admin.grid(column=0, row=5, padx=2, pady=2, sticky='ew', columnspan=9)
         # Setup admin choices
         lbl_headeradmin = tk.Label(self.frame_admin)
         lbl_headeradmin.configure(font='{Arial} 8 {bold}', justify='left', text='Items:')
@@ -201,19 +202,31 @@ class BackupMgrGUI:
         self.txt_hours.grid(column=8, row=0, sticky='w', padx=2, pady=2)
         # Setup frequcncy command
         cmb_frequency.bind('<<ComboboxSelected>>', lambda e, source_var=self._adminfreq, target_ctl=self.txt_hours, target_var=self._adminhours: self._populate_hours(source_var, target_var, target_ctl))
+        # Setup admin frame
+        frame_items = tk.Frame(self._gui)
+        frame_items.columnconfigure(1, weight=2)
+        frame_items.columnconfigure(3, weight=1)
+        frame_items.grid(column=0, row=6, padx=2, pady=2, sticky='ew', columnspan=9)
         # Setup items header
-        hdr_items = tk.Label(self._gui)
+        hdr_items = tk.Label(frame_items)
         hdr_items.configure(font='{Arial} 10 {bold}', justify='left', text='Item Config')
-        hdr_items.grid(column=0, row=7, padx=2, pady=2, sticky='w', columnspan=2)
-        btn_connect = tk.Button(self._gui)
-        btn_connect.configure(font='{Arial} 8 {}', text='Refresh', command=self._loaditems)
-        btn_connect.grid(column=1, row=7, sticky='e', padx=2, pady=2)
+        hdr_items.grid(column=0, row=0, padx=2, pady=2, sticky='w')
+        lbl_pword = tk.Label(frame_items)
+        lbl_pword.configure(font='{Arial} 8 {bold}', text='Filter')
+        lbl_pword.grid(column=2, row=0, sticky='e')
+        self.txt_filter = tk.Entry(frame_items)
+        self._filter.trace_add("write", self._filteritems)
+        self.txt_filter.configure(font='{Arial} 8 {}', textvariable=self._filter)
+        self.txt_filter.grid(column=3, padx=2, pady=2, row=0, sticky='ew')
+        btn_refresh = tk.Button(frame_items)
+        btn_refresh.configure(font='{Arial} 8 {}', text='Refresh', command=self._loaditems)
+        btn_refresh.grid(column=4, row=0, sticky='e', padx=2, pady=2)
         # Setup items frame
         self.frame_items = TkScrolledFrame(self._gui, scrolltype='both')
         self.frame_items.innerframe.configure(bg='white')
         self.frame_items.innerframe.columnconfigure(0, weight=1)
         self.frame_items.configure(usemousewheel=True)
-        self.frame_items.grid(column=0, row=8, padx=5, pady=5, sticky='nesw', columnspan=2)
+        self.frame_items.grid(column=0, row=7, padx=5, pady=5, sticky='nesw', columnspan=2)
         # Set main window
         self.mainwindow = self._gui
 
@@ -534,6 +547,33 @@ class BackupMgrGUI:
         for widget in self.frame_items.innerframe.winfo_children():
             widget.destroy()
 
+    def _showTkObj(self, obj, show):
+        if show:
+            obj.grid()
+        else:
+            obj.grid_remove()
+        
+
+    def _filteritems(self, var, index, mode):
+        """Filter Items
+        
+        """
+        filter_value = self._filter.get()
+        # Process items
+        for k, itm in self._items.items():
+            # Check if matches filter
+            match = filter_value.lower() in itm['kwords']
+            # Turn objects on or off
+            self._showTkObj(itm['chk_itm'], match)
+            self._showTkObj(itm['txt_itm_folder'], match)
+            self._showTkObj(itm['txt_itm_type'], match)
+            self._showTkObj(itm['txt_itm_id'], match)
+            self._showTkObj(itm['txt_itm_lastupd'], match)
+            self._showTkObj(itm['cmb_itm_freq'], match)
+            self._showTkObj(itm['txt_itm_hours'], match)
+            self._showTkObj(itm['txt_itm_options'], match)
+            self._showTkObj(itm['cmb_itm_format'], match)
+                
     def _loaditems(self, init: bool = False):
         """Load items
 
@@ -588,23 +628,29 @@ class BackupMgrGUI:
                 # Setup item label
                 itm['id'] = i['id']
                 itm['row'] = row
+                itm['kwords'] = str(row)
                 itm['selected'] = tk.IntVar(value=1 if itmcfg else 0)
                 itm['chk_itm'] = tk.Checkbutton(self.frame_items.innerframe, text=i['title'], variable=itm['selected'], bg='white')
                 itm['chk_itm'].configure(font='{Arial} 8 {}')
                 itm['chk_itm'].grid(column=0, row=row, sticky='w', padx=2, pady=2)
                 itm['selected'].trace('w', lambda name, index, mode, id=itm['id']: self._select_item(id))
+                itm['kwords'] += i['title']
+                itm['kwords'] += 'selected' if itmcfg else ''
                 # Setup item id
                 itm['txt_itm_folder'] = tk.Label(self.frame_items.innerframe, bg='white')
                 itm['txt_itm_folder'].configure(font='{Arial} 8 {}', text=i['folder'])
                 itm['txt_itm_folder'].grid(column=1, row=row, sticky='w', padx=2, pady=2,)
+                itm['kwords'] += i['folder']
                 # Setup item type
                 itm['txt_itm_type'] = tk.Label(self.frame_items.innerframe, bg='white')
                 itm['txt_itm_type'].configure(font='{Arial} 8 {}', text=i['type'])
                 itm['txt_itm_type'].grid(column=2, row=row, sticky='w', padx=2, pady=2)
+                itm['kwords'] += i['type']
                 # Setup item id
                 itm['txt_itm_id'] = tk.Label(self.frame_items.innerframe, bg='white')
                 itm['txt_itm_id'].configure(font='{Arial} 8 {}', text=itm['id'])
                 itm['txt_itm_id'].grid(column=3, row=row, sticky='w', padx=2, pady=2,)
+                itm['kwords'] += itm['id']
                 # Setup item last update flag
                 if itmcfg and 'last' in itmcfg:
                     lastrun = datetime.fromisoformat(self._cfg["last"]).strftime("%Y/%m/%d %H:%M:%S")
@@ -659,6 +705,7 @@ class BackupMgrGUI:
                 itm['cmb_itm_format'] = ttk.Combobox(self.frame_items.innerframe, width=6)
                 itm['cmb_itm_format'].configure(font='{Arial} 8 {}', values=export_types, textvariable=itm['format'])
                 itm['cmb_itm_format'].grid(column=8, row=row, sticky='w', padx=2, pady=2)
+                itm['kwords'] += itm['format'].get()
                 # Disable inputs if not selected
                 if itm['selected'].get() == 0:
                     itm['txt_itm_lastupd'].configure(state='disabled')
@@ -667,6 +714,7 @@ class BackupMgrGUI:
                     itm['txt_itm_options'].configure(state='disabled')
                     itm['cmb_itm_format'].configure(state='disabled')
                 # Add item to list
+                itm['kwords'] = itm['kwords'].lower()
                 self._items[i['id']] = itm
                 # Update row placeholder
                 row += 1
