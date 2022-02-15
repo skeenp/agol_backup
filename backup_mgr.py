@@ -65,59 +65,7 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
         # Get arcgis online connection object
         ago = agol.Agol(cfg["portal"], cfg["uname"], cfg["pword"], logger)
         # Check for error
-        if ago:
-            # Check if backing up admin or normal items
-            if "admin" in cfg and cfg['admin']:
-                # Update status
-                log.post(logger, 'Collecting Admin Items')
-                # Setup admin var
-                admin = cfg['admin']
-                # Get options
-                if 'options' in admin:
-                    options = admin["options"]
-                else:
-                    options = 'all'
-                # Get options
-                if 'component' in admin:
-                    component = admin["component"]
-                else:
-                    component = None
-                # Check for due date
-                if reset:
-                    admin_due = True
-                elif not os.path.exists(backup_dir):
-                    # If item folder does mark as due
-                    admin_due = True
-                elif admin["hours_diff"] == 0.0:
-                    # If item is set at 0, skip
-                    log.post(logger, " > Skipped admin, item set to ignore (hours_diff=0.0)")
-                    admin_due = False
-                elif admin["hours_diff"] > 0.0:
-                    # Setup diff with a 2% margin
-                    diff = admin["hours_diff"] * 0.98
-                    # Get last run date
-                    last_ts = admin["last"] if 'last' in admin else '2000-01-01'
-                    last_run = datetime.fromisoformat(last_ts)
-                    # Check if item is due based on last run and hours_diff
-                    admin_duedate = last_run + timedelta(hours=diff)
-                    admin_due = admin_duedate < datetime.now()
-                else:
-                    # Default to due
-                    admin_due = True
-                # Check if due
-                if admin_due:
-                    # Backup admin item
-                    # TODO Depreciate component = all
-                    if 'users' in component or 'all' in component:
-                        ba.backup_users(ago.gis, backup_dir, options, logger)
-                    if 'groups' in component or 'all' in component:
-                        ba.backup_groups(ago.gis, backup_dir, options, logger)
-                    if 'self' in component or 'all' in component:
-                        ba.backup_self(ago.gis, backup_dir, options, logger)
-                    log.post(logger, " > Admin successfully backed up")
-                else:
-                    # Update status
-                    log.post(logger, " > Skipped admin, not due yet")
+        if ago: 
             # Process items
             try:
                 # Update status
@@ -127,47 +75,81 @@ def run(cfg_paths: list, logger: logging, reset: bool = False):
                     # Get item id
                     itemid = k
                     log.post(logger, f" - {itemid}")
-                    # Check if backup is not yet due
-                    itmdir = os.path.join(backup_dir, "items")
-                    # Get format
-                    if "format" in item:
-                        fmt = item["format"]
-                    else:
-                        fmt = None
-                    # Get options
-                    if 'options' in item:
-                        options = item["options"]
-                    else:
-                        options = 'all'
-                    # Check for due date
-                    if reset:
-                        admin_due = True
-                    elif not os.path.exists(itmdir):
-                        # If item folder does mark as due
-                        item_due = True
-                    elif item["hours_diff"] == 0.0:
-                        # If item is set at 0, skip
-                        log.post(logger, " > Skipped item, item set to ignore (hours_diff=0.0)")
-                        admin_due = False
-                    elif item["hours_diff"] > 0.0:
-                        # Setup diff with a 2% margin
-                        diff = item["hours_diff"] * 0.98
-                        # Check if item is due based on last run and hours_diff
-                        last_run = util.get_ts(os.path.join(itmdir, itemid, 'lastupdate.ts'))
-                        item_duedate = last_run + timedelta(hours=diff)
-                        item_due = item_duedate < datetime.now()
-                    else:
-                        item_due = True
-                    # Continue to next item if not due
-                    if item_due:
-                        # Run backup for item
-                        skipunmod = False if reset else True
-                        res = bi.backup(ago.gis, itemid, backup_dir, options, fmt, skip_unmodified=skipunmod, logger=logger)
-                        # Update status if appropriate
-                        if res.value > 1:
-                            log.post(logger, f" > Skipped item, {res}")
-                    else:
-                        log.post(logger, " > Skipped item, not yet due")
+                    # Process admin if this is an admin item     
+                    if k in ['self', 'users', 'groups']:
+                        # Check for due date
+                        if reset:
+                            admin_due = True
+                        elif not os.path.exists(backup_dir):
+                            # If item folder does not exist mark as due
+                            admin_due = True
+                        elif item["hours_diff"]:
+                            # Setup diff with a 2% margin
+                            diff = item["hours_diff"] * 0.98
+                            # Get last run date
+                            last_ts = item["last"] if 'last' in item else '2000-01-01'
+                            last_run = datetime.fromisoformat(last_ts)
+                            # Check if item is due based on last run and hours_diff
+                            admin_duedate = last_run + timedelta(hours=diff)
+                            admin_due = admin_duedate < datetime.now()
+                        else:
+                            # Default to due
+                            admin_due = True
+                        # Check if due
+                        if admin_due:
+                            # Backup admin item
+                            if k == 'users':
+                                ba.backup_users(ago.gis, backup_dir, options, logger)
+                            elif k == 'groups':
+                                ba.backup_groups(ago.gis, backup_dir, options, logger)
+                            elif k == 'self':
+                                ba.backup_self(ago.gis, backup_dir, options, logger)
+                            log.post(logger, f" > {item['title']} successfully backed up")
+                        else:
+                            # Update status
+                            log.post(logger, f" > Skipped {item['title']}, not due yet")
+                    else:  
+                        # Check if backup is not yet due
+                        itmdir = os.path.join(backup_dir, "items")
+                        # Get format
+                        if "format" in item:
+                            fmt = item["format"]
+                        else:
+                            fmt = None
+                        # Get options
+                        if 'options' in item:
+                            options = item["options"]
+                        else:
+                            options = 'all'
+                        # Check for due date
+                        if reset:
+                            admin_due = True
+                        elif not os.path.exists(itmdir):
+                            # If item folder does mark as due
+                            item_due = True
+                        elif item["hours_diff"] == 0.0:
+                            # If item is set at 0, skip
+                            log.post(logger, " > Skipped item, item set to ignore (hours_diff=0.0)")
+                            admin_due = False
+                        elif item["hours_diff"] > 0.0:
+                            # Setup diff with a 2% margin
+                            diff = item["hours_diff"] * 0.98
+                            # Check if item is due based on last run and hours_diff
+                            last_run = util.get_ts(os.path.join(itmdir, itemid, 'lastupdate.ts'))
+                            item_duedate = last_run + timedelta(hours=diff)
+                            item_due = item_duedate < datetime.now()
+                        else:
+                            item_due = True
+                        # Continue to next item if not due
+                        if item_due:
+                            # Run backup for item
+                            skipunmod = False if reset else True
+                            res = bi.backup(ago.gis, itemid, backup_dir, options, fmt, skip_unmodified=skipunmod, logger=logger)
+                            # Update status if appropriate
+                            if res.value > 1:
+                                log.post(logger, f" > Skipped item, {res}")
+                        else:
+                            log.post(logger, " > Skipped item, not yet due")
             except Exception:
                 # Report error and continue
                 logger.exception('Unexpected error occured backing up files, please review code and try again.')

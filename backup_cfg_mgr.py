@@ -16,7 +16,6 @@ import webbrowser
 import pathlib
 
 # TODO: Multithreading on item load
-# TODO: Filtering
 # TODO: Remove/cleanup packages from AGOL
 
 PROJECT_PATH = pathlib.Path(__file__).parent
@@ -42,13 +41,14 @@ class BackupMgrGUI:
         """
         # Build UI
         self._gui = master
-        self._gui.geometry('1360x720')
+        # Show loader
+        self._gui.geometry('1080x720')
         self._gui.minsize(width=480, height=360)
         self._gui.iconbitmap('img/backup_cfg_mgr.ico')
         self._gui.wm_title("Backup Manager GUI")
         self._gui.columnconfigure(0, weight=1)
         self._gui.columnconfigure(1, weight=1)
-        self._gui.rowconfigure(7, weight=1)
+        self._gui.rowconfigure(6, weight=1)
         # Capture logger
         self._logger = logger
         # Setup vars
@@ -94,7 +94,6 @@ class BackupMgrGUI:
         frame_settings.columnconfigure(1, weight=1)
         frame_settings.columnconfigure(4, weight=1)
         frame_settings.columnconfigure(7, weight=1)
-        frame_settings.rowconfigure(6, weight=1)
         frame_settings.grid(column=0, row=3, padx=2, pady=2, sticky='ew', columnspan=3)
         # Setup connection header
         hdr_connection = tk.Label(frame_settings)
@@ -157,56 +156,11 @@ class BackupMgrGUI:
         btn_connect = tk.Button(frame_settings)
         btn_connect.configure(font='{Arial} 8 {}', text='Connect', command=self._agol_connect)
         btn_connect.grid(column=8, row=5, sticky='ew', padx=2, pady=2,)
-        # Setup admin frame
-        frame_admin_hdr = tk.Frame(frame_settings)
-        frame_admin_hdr.grid(column=0, row=6, sticky='ew', columnspan=9)
-        # Setup portal/agol vars
-        hdr_admin = tk.Label(frame_admin_hdr)
-        hdr_admin.configure(font='{Arial} 10 {bold}', justify='left', text='Admin Data')
-        hdr_admin.grid(column=0, row=0, sticky='w')
-        # Setup export admin data flag
-        chk_exportadmin = tk.Checkbutton(frame_admin_hdr)
-        chk_exportadmin.configure(font='{Arial} 8 {}', justify='left', text='Export Admin Data', variable=self._exportadmin)
-        chk_exportadmin.grid(column=1, row=0, sticky='w')
-        # Setup admin trace
-        self._exportadmin.trace("w", self._toggleadmin)
-        # Setup admin frame
-        self.frame_admin = tk.Frame(self._gui)
-        self.frame_admin.grid(column=0, row=5, padx=2, pady=2, sticky='ew', columnspan=9)
-        # Setup admin choices
-        lbl_headeradmin = tk.Label(self.frame_admin)
-        lbl_headeradmin.configure(font='{Arial} 8 {bold}', justify='left', text='Items:')
-        lbl_headeradmin .grid(column=0, row=0, padx=2, pady=2, sticky='w')
-        chk_exportme = tk.Checkbutton(self.frame_admin)
-        chk_exportme.configure(font='{Arial} 8 {}', justify='left', text='My Data', variable=self._exportme)
-        chk_exportme.grid(column=1, row=0, sticky='w')
-        chk_exportusers = tk.Checkbutton(self.frame_admin)
-        chk_exportusers.configure(font='{Arial} 8 {}', justify='left', text='Org Users', variable=self._exportusers)
-        chk_exportusers.grid(column=2, row=0, sticky='w')
-        chk_exportgroups = tk.Checkbutton(self.frame_admin)
-        chk_exportgroups.configure(font='{Arial} 8 {}', justify='left', text='Org Groups', variable=self._exportgroups)
-        chk_exportgroups.grid(column=3, row=0, sticky='w', padx=2, pady=2)
-        # Setup frequency
-        lbl_frequency = tk.Label(self.frame_admin)
-        lbl_frequency.configure(font='{Arial} 8 {bold}', text='Frequency:')
-        lbl_frequency.grid(column=5, row=0, sticky='w', padx=2, pady=2)
-        cmb_frequency = ttk.Combobox(self.frame_admin, width=6)
-        cmb_frequency.configure(font='{Arial} 8 {}', values=list(FREQUENCY_OPTIONS.keys()), textvariable=self._adminfreq)
-        cmb_frequency.grid(column=6, row=0, sticky='w', padx=2, pady=2)
-        # Setup hours
-        lbl_hours = tk.Label(self.frame_admin)
-        lbl_hours.configure(font='{Arial} 8 {bold}', text='Hours:')
-        lbl_hours.grid(column=7, row=0, sticky='w', padx=2, pady=2)
-        self.txt_hours = tk.Entry(self.frame_admin)
-        self.txt_hours.configure(font='{Arial} 8 {}', textvariable=self._adminhours)
-        self.txt_hours.grid(column=8, row=0, sticky='w', padx=2, pady=2)
-        # Setup frequcncy command
-        cmb_frequency.bind('<<ComboboxSelected>>', lambda e, source_var=self._adminfreq, target_ctl=self.txt_hours, target_var=self._adminhours: self._populate_hours(source_var, target_var, target_ctl))
-        # Setup admin frame
+        # Setup items frame
         frame_items = tk.Frame(self._gui)
         frame_items.columnconfigure(1, weight=2)
         frame_items.columnconfigure(3, weight=1)
-        frame_items.grid(column=0, row=6, padx=2, pady=2, sticky='ew', columnspan=9)
+        frame_items.grid(column=0, row=5, padx=2, pady=2, sticky='ew', columnspan=9)
         # Setup items header
         hdr_items = tk.Label(frame_items)
         hdr_items.configure(font='{Arial} 10 {bold}', justify='left', text='Item Config')
@@ -226,7 +180,7 @@ class BackupMgrGUI:
         self.frame_items.innerframe.configure(bg='white')
         self.frame_items.innerframe.columnconfigure(0, weight=1)
         self.frame_items.configure(usemousewheel=True)
-        self.frame_items.grid(column=0, row=7, padx=5, pady=5, sticky='nesw', columnspan=2)
+        self.frame_items.grid(column=0, row=6, padx=5, pady=5, sticky='nesw', columnspan=2)
         # Set main window
         self.mainwindow = self._gui
 
@@ -513,33 +467,12 @@ class BackupMgrGUI:
             self._usegit.set(self._cfg["usegit"])
         else:
             self._usegit.set(True)
-        if "admin" in self._cfg:
-            self._exportadmin.set(not self._cfg['admin'] is None)
-        # Load admin items
-        if self._cfg['admin']:
-            # Get admin component and options
-            comps = self._cfg['admin']['component']
-            # Update admin options
-            self._exportme.set('me' in comps or 'all' in comps)
-            self._exportusers.set('users' in comps or 'all' in comps)
-            self._exportgroups.set('groups' in comps or 'all' in comps)
-            self._adminoptions.set(','.join(self._cfg['admin']['options']))
-            # Load frequency/hours
-            hours = self._cfg['admin']['hours_diff']
-            freq = [k for k, v in FREQUENCY_OPTIONS.items() if v == hours]
-            if freq:
-                self._adminfreq.set(freq[0])
-                self.txt_hours.configure(state="readonly")
-            else:
-                self._adminfreq.set('Custom')
-                self.txt_hours.configure(state="normal")
-            self._adminhours.set(self._cfg['admin']['hours_diff'])
         # If uname, pword and portal is supplied, test connection
         if not (self._cfg["pword"] is None or self._cfg["uname"] is None or self._cfg["portal"] is None):
             self._agol_connect(init=True)
         # Load items
         self._loaditems(init=True)
-
+        
     def _clearitems(self):
         """Clear out old items
         """
@@ -616,8 +549,17 @@ class BackupMgrGUI:
             row = 1
             # Reset items
             self._items = {}
+            # Setup agol items
+            me = {'id': "self", 'title': 'My Details (Admin)', 'folder': '', 'type': 'Admin Item'}
+            users = {'id': "users", 'title': 'Users (Admin)', 'folder': '', 'type': 'Admin Item'}
+            groups = {'id': "groups", 'title': 'Groups (Admin)', 'folder': '', 'type': 'Admin Item'}
+            # Add admin items
+            agol_items = [me, users, groups]
+            # Load agol items
+            agol_items += self._ago.myitems
+            # Setup admin items
             # Collect AGOL items
-            for i in self._ago.myitems:
+            for i in agol_items:
                 # Setup itme
                 itm = {}
                 # Get cfg item if exists
@@ -632,7 +574,7 @@ class BackupMgrGUI:
                 itm['selected'] = tk.IntVar(value=1 if itmcfg else 0)
                 itm['chk_itm'] = tk.Checkbutton(self.frame_items.innerframe, text=i['title'], variable=itm['selected'], bg='white')
                 itm['chk_itm'].configure(font='{Arial} 8 {}')
-                itm['chk_itm'].grid(column=0, row=row, sticky='w', padx=2, pady=2)
+                itm['chk_itm'].grid(column=0, row=row, sticky='w', padx=2, pady=2) 
                 itm['selected'].trace('w', lambda name, index, mode, id=itm['id']: self._select_item(id))
                 itm['kwords'] += i['title']
                 itm['kwords'] += 'selected' if itmcfg else ''
@@ -713,6 +655,10 @@ class BackupMgrGUI:
                     itm['txt_itm_hours'].configure(state='disabled')
                     itm['txt_itm_options'].configure(state='disabled')
                     itm['cmb_itm_format'].configure(state='disabled')
+                # Disable options and format for admin items
+                if itm['id'] in ['self', 'users', 'groups']:
+                    itm['txt_itm_options'].grid_remove()
+                    itm['cmb_itm_format'].grid_remove()
                 # Add item to list
                 itm['kwords'] = itm['kwords'].lower()
                 self._items[i['id']] = itm
