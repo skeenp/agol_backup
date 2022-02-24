@@ -199,7 +199,7 @@ def backup(gis: GIS, itemid: str, directory: str, options: list, fmt: str, skip_
             title = f"{item['title']}{postfix}"
             try:
                 # Setup export
-                export = item.export(title=title, export_format=fmt, wait=True, overwrite=True, tags="Backup")
+                export = item.export(title=title, export_format=fmt, wait=True, tags="Backup")
                 # Grab data
                 file_data = export.download(item_dir)
                 os.rename(file_data, file_data.replace(postfix, ''))
